@@ -2,36 +2,36 @@
 /**
  * PayPal Express Checkout Payment
  * @author Jeremy Shipman jeremy [at] burnbright.co.nz
- * 
+ *
  * Developer documentation:
  * Integration guide: https://cms.paypal.com/cms_content/US/en_US/files/developer/PP_ExpressCheckout_IntegrationGuide.pdf
  * API reference: 	  https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/howto_api_reference
- * 
+ *
  */
 
 class PayPalExpressCheckoutPayment extends Payment{
-	
+
 	static $db = array(
 		'Token' => 'Varchar(30)',
 		'PayerID' => 'Varchar(30)',
 		'TransactionID' => 'Varchar(30)'
 	);
-	
+
 	protected static $logo = "payment/images/payments/paypal.jpg";
-	
+
 	//PayPal URLs
 	protected static $test_API_Endpoint = "https://api-3t.sandbox.paypal.com/nvp";
 	protected static $test_PAYPAL_URL = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=";
 
 	protected static $API_Endpoint = "https://api-3t.paypal.com/nvp";
 	protected static $PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=";
-	
+
 	protected static $privacy_link = "https://www.paypal.com/us/cgi-bin/webscr?cmd=p/gen/ua/policy_privacy-outside";
-	
+
 	//redirect URLs
 	protected static $returnURL = "PaypalExpressCheckoutaPayment_Handler/confirm";
 	protected static $cancelURL = "PaypalExpressCheckoutaPayment_Handler/cancel";
-	
+
 	//config
 	protected static $test_mode = true; //on by default
 
@@ -39,9 +39,9 @@ class PayPalExpressCheckoutPayment extends Payment{
 	protected static $API_Password;
 	protected static $API_Signature;
 	protected static $sBNCode = null; // BN Code 	is only applicable for partners
-	
+
 	protected static $version = '64';
-	
+
 	//set custom settings
 	protected static $customsettings = array(
 		//design
@@ -50,13 +50,13 @@ class PayPalExpressCheckoutPayment extends Payment{
 		//'HDRBACKCOLOR' => '00FFFF', //header background
 		//'PAYFLOWCOLOR'=> 'AAAAAA' //payflow colour
 		//'PAGESTYLE' => //page style set in merchant account settings
-		
+
 		'SOLUTIONTYPE' => 'Sole'//require paypal account, or not. Can be or 'Mark' (required) or 'Sole' (not required)
 		//'BRANDNAME'  => 'my site name'//override business name in checkout
 		//'CUSTOMERSERVICENUMBER' => '0800 1234 5689'//number to call to resolve payment issues
 		//'NOSHIPPING' => 1 //disable showing shipping details
 	);
-	
+
 	static function set_config_details($username,$password,$signature,$testmode = true){
 		self::$API_UserName = $username;
 		self::$API_Password = $password;
@@ -64,55 +64,60 @@ class PayPalExpressCheckoutPayment extends Payment{
 		//self::$sBNCode = $sbncode;
 		self::$test_mode = $testmode;
 	}
-	
+
 	static function set_live_config($username,$password,$signature){
 		self::set_config_details($username,$password,$signature,false);
 	}
-	
+
 	static function set_test_config($username,$password,$signature){
 		self::set_config_details($username,$password,$signature,true);
 	}
-	
+
 	static function set_custom_settings(array $design){
 		self::$customsettings = array_merge(self::$customsettings,$design);
 	}
-	
+
 	//main processing function
 	function processPayment($data, $form) {
-		
+
 		//sanity checks for credentials
 		if(!self::$API_UserName || !self::$API_Password || !self::$API_Signature){
-			user_error('You are attempting to make a payment without the necessary credentials set', E_USER_ERROR);
+			user_error('You are attempting to make a payment without the necessary credentials set.', E_USER_ERROR);
 		}
-		
+		if(!$this->Amount->Amount) {
+			user_error('No amount is set.', E_USER_ERROR);
+		}
+		if(!$this->Amount->Currency) {
+			user_error('No currency is set.', E_USER_ERROR);
+		}
 		$paymenturl = $this->getTokenURL($this->Amount->Amount,$this->Amount->Currency,$data);
-		
+
 		$this->Status = "Pending";
 		$this->write();
-		
+
 		if($paymenturl){
 			Director::redirect($paymenturl); //redirect to payment gateway
 			return new Payment_Processing();
 		}
-		
+
 		$this->Message = _t('PayPalPayment.COULDNOTBECONTACTED',"PayPal could not be contacted");
 		$this->Status = 'Failure';
 		$this->write();
-		
+
 		return new Payment_Failure($this->Message);
 	}
-	
+
 
 	/**
 	 * Requests a Token url, based on the provided Name-Value-Pair fields
 	 * See docs for more detail on these fields:
 	 * https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_nvp_r_SetExpressCheckout
-	 * 
+	 *
 	 * Note: some of these values will override the paypal merchant account settings.
 	 * Note: not all fields are listed here.
-	 */	
+	 */
 	protected function getTokenURL($paymentAmount, $currencyCodeType, $extradata = array()){
-		
+
 		$data = array(
 			//payment info
 			'PAYMENTREQUEST_0_AMT' => $paymentAmount,
@@ -124,46 +129,46 @@ class PayPalExpressCheckoutPayment extends Payment{
 			//'PAYMENTREQUEST_0_SHIPDISCAMT' //shipping discount
 			//'PAYMENTREQUEST_0_HANDLINGAMT' //handling
 			//'PAYMENTREQUEST_0_TAXAMT' //tax
-			
+
 			//'PAYMENTREQUEST_0_INVNUM' => $this->PaidObjectID //invoice number
 			//'PAYMENTREQUEST_0_TRANSACTIONID' => $this->ID //Transactino id
 			//'PAYMENTREQUEST_0_DESC' => //description
 			//'PAYMENTREQUEST_0_NOTETEXT' => //note to merchant
-			
+
 			//'PAYMENTREQUEST_0_PAYMENTACTION' => , //Sale, Order, or Authorization
 			//'PAYMENTREQUEST_0_PAYMENTREQUESTID'
-			
+
 			//return urls
 			'RETURNURL' => Director::absoluteURL(self::$returnURL,true),
 			'CANCELURL' => Director::absoluteURL(self::$cancelURL,true),
 			//'PAYMENTREQUEST_0_NOTIFYURL' => //Instant payment notification
-			 
+
 			//'CALLBACK'
 			//'CALLBACKTIMEOUT'
-						
+
 			//shipping display
 			//'REQCONFIRMSHIPPING' //require that paypal account address be confirmed
 			'NOSHIPPING' => 1, //show shipping fields, or not 0 = show shipping, 1 = don't show shipping, 2 = use account address, if none passed
 			//'ALLOWOVERRIDE' //display only the provided address, not the one stored in paypal
-			
+
 			//TODO: Probably overkill, but you can even include the prices,qty,weight,tax etc for individual sale items
-					
+
 			//other settings
 			//'LOCALECODE' => //locale, or default to US
 			'LANDINGPAGE' => 'Billing' //can be 'Billing' or 'Login'
 
 		);
-		
+
 		if(!isset($extradata['Name'])){
 			$arr =  array();
 			if(isset($extradata['FirstName'])) $arr[] = $extradata['FirstName'];
 			if(isset($extradata['MiddleName'])) $arr[] = $extradata['MiddleName'];
 			if(isset($extradata['Surname'])) $arr[] = $extradata['Surname'];
-			
+
 			$extradata['Name'] = implode(' ',$arr);
 		}
-			
-		
+
+
 		//add member & shipping fields ...this will pre-populate the paypal login / create account form
 		foreach(array(
 			'Email' => 'EMAIL',
@@ -178,18 +183,18 @@ class PayPalExpressCheckoutPayment extends Payment{
 		) as $field => $val){
 			if(isset($extradata[$field])){
 				$data[$val] = $extradata[$field];
-			}			
+			}
 		}
-		
+
 		//set design settings
 		$data = array_merge(self::$customsettings,$data);
 
 		$response = $this->apiCall('SetExpressCheckout',$data);
-		
+
 		if(!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")){
-			
+
 			$mode = (self::$test_mode === true) ? "test" : "live";
-			
+
 			$debugmessage = "PayPal Debug:" .
 					"\nMode: $mode".
 					"\nAPI url: ".$this->getApiEndpoint().
@@ -198,12 +203,11 @@ class PayPalExpressCheckoutPayment extends Payment{
 					"\nPassword: " .self::$API_Password.
 					"\nSignature: ".self::$API_Signature.
 					"\nResponse ".print_r($response,true);
-					
 			Debug::log($debugmessage);
-			
+
 			return null;
 		}
-		
+
 		//get and save token for later
 		$token = $response['TOKEN'];
 		$this->Token = $token;
@@ -211,13 +215,13 @@ class PayPalExpressCheckoutPayment extends Payment{
 
 		return $this->getPayPalURL($token);
 	}
-	
+
 	/**
 	 * see https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_nvp_r_DoExpressCheckoutPayment
 	 */
 	function confirmPayment(){
-		
-				
+
+
 		$data = array(
 			'PAYERID' => $this->PayerID,
 			'TOKEN' => $this->Token,
@@ -226,25 +230,25 @@ class PayPalExpressCheckoutPayment extends Payment{
 			'PAYMENTREQUEST_0_CURRENCYCODE' => $this->Amount->Currency,
 			'IPADDRESS' => urlencode($_SERVER['SERVER_NAME'])
 		);
-		
+
 		$response = $this->apiCall('DoExpressCheckoutPayment',$data);
-		
+
 		if(!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")){
 			return null;
 		}
-		
-		
+
+
 		if(isset($response["PAYMENTINFO_0_TRANSACTIONID"])){
 			$this->TransactionID	= $response["PAYMENTINFO_0_TRANSACTIONID"]; 	//' Unique transaction ID of the payment. Note:  If the PaymentAction of the request was Authorization or Order, this value is your AuthorizationID for use with the Authorization & Capture APIs.
-		} 
-		//$transactionType 		= $response["PAYMENTINFO_0_TRANSACTIONTYPE"]; //' The type of transaction Possible values: l  cart l  express-checkout 
-		//$paymentType			= $response["PAYMENTTYPE"];  	//' Indicates whether the payment is instant or delayed. Possible values: l  none l  echeck l  instant 
+		}
+		//$transactionType 		= $response["PAYMENTINFO_0_TRANSACTIONTYPE"]; //' The type of transaction Possible values: l  cart l  express-checkout
+		//$paymentType			= $response["PAYMENTTYPE"];  	//' Indicates whether the payment is instant or delayed. Possible values: l  none l  echeck l  instant
 		//$orderTime 				= $response["ORDERTIME"];  		//' Time/date stamp of payment
-		
+
 		//TODO: should these be updated like this?
 		//$this->Amount->Amount	= $response["AMT"];  			//' The final amount charged, including any shipping and taxes from your Merchant Profile.
-		//$this->Amount->Currency= $response["CURRENCYCODE"];  	//' A three-character currency code for one of the currencies listed in PayPay-Supported Transactional Currencies. Default: USD. 
-		
+		//$this->Amount->Currency= $response["CURRENCYCODE"];  	//' A three-character currency code for one of the currencies listed in PayPay-Supported Transactional Currencies. Default: USD.
+
 		//TODO: store this extra info locally?
 		//$feeAmt					= $response["FEEAMT"];  		//' PayPal fee amount charged for the transaction
 		//$settleAmt				= $response["SETTLEAMT"];  		//' Amount deposited in your PayPal account after a currency conversion.
@@ -252,7 +256,7 @@ class PayPalExpressCheckoutPayment extends Payment{
 		//$exchangeRate			= $response["EXCHANGERATE"];  	//' Exchange rate if a currency conversion occurred. Relevant only if your are billing in their non-primary currency. If the customer chooses to pay with a currency other than the non-primary currency, the conversion occurs in the customer’s account.
 
 		if(isset($response["PAYMENTINFO_0_PAYMENTSTATUS"])){
-			
+
 			switch(strtoupper($response["PAYMENTINFO_0_PAYMENTSTATUS"])){
 				case "PROCESSED":
 				case "COMPLETED":
@@ -262,21 +266,21 @@ class PayPalExpressCheckoutPayment extends Payment{
 				case "EXPIRED":
 					$this->Message = _t('PayPalPayment.AUTHORISATION',"The authorization period for this payment has been reached");
 					$this->Status = 'Failure';
-					break;	
+					break;
 				case "DENIED":
 					$this->Message = _t('PayPalPayment.FAILURE',"Payment was denied");
 					$this->Status = 'Failure';
-					break;	
+					break;
 				case "REVERSED":
 					$this->Status = 'Failure';
-					break;	
+					break;
 				case "VOIDED":
 					$this->Message = _t('PayPalPayment.VOIDED',"An authorization for this transaction has been voided.");
 					$this->Status = 'Failure';
-					break;	
+					break;
 				case "FAILED":
 					$this->Status = 'Failure';
-					break;					
+					break;
 				case "CANCEL-REVERSAL": // A reversal has been canceled; for example, when you win a dispute and the funds for the reversal have been returned to you.
 					break;
 				case "IN-PROGRESS":
@@ -293,18 +297,18 @@ class PayPalExpressCheckoutPayment extends Payment{
 					break;
 				case "REFUNDED":
 					$this->Message = _t('PayPalPayment.REFUNDED',"Payment refunded.");
-					break;	
+					break;
 				default:
-			}	
+			}
 		}
-		//$reasonCode		= $response["REASONCODE"]; 
-		
+		//$reasonCode		= $response["REASONCODE"];
+
 		$this->write();
-		
+
 	}
-	
+
 	protected function getPendingReason($reason){
-		
+
 		switch($reason){
 			case "address":
 				return _t('PayPalPayment.PENDING.ADDRESS',"A confirmed shipping address was not provided.");
@@ -323,33 +327,33 @@ class PayPalExpressCheckoutPayment extends Payment{
 			case "other":
 		}
 	}
-	
+
 	/**
 	 * Handles actual communication with API server.
 	 */
 	protected function apiCall($method,$data = array()){
-		
+
 		$postfields = array(
 			'METHOD' => $method,
 			'VERSION' => self::$version,
-			'USER' => self::$API_UserName,			
+			'USER' => self::$API_UserName,
 			'PWD'=> self::$API_Password,
 			'SIGNATURE' => self::$API_Signature,
 			'BUTTONSOURCE' => self::$sBNCode
 		);
-		
+
 		$postfields = array_merge($postfields,$data);
-		
+
 		//Make POST request to Paystation via RESTful service
 		$paystation = new RestfulService($this->getApiEndpoint(),0); //REST connection that will expire immediately
 		$paystation->httpHeader('Accept: application/xml');
 		$paystation->httpHeader('Content-Type: application/x-www-form-urlencoded');
-		
-		$response = $paystation->request('','POST',http_build_query($postfields));	
-		
+
+		$response = $paystation->request('','POST',http_build_query($postfields));
+
 		return $this->deformatNVP($response->getBody());
 	}
-	
+
 	protected function deformatNVP($nvpstr){
 		$intial = 0;
 	 	$nvpArray = array();
@@ -369,17 +373,17 @@ class PayPalExpressCheckoutPayment extends Payment{
 	     }
 		return $nvpArray;
 	}
-	
+
 	protected function getApiEndpoint(){
 		return (self::$test_mode === true) ? self::$test_API_Endpoint : self::$API_Endpoint;
 	}
-	
+
 	protected function getPayPalURL($token){
 		$url = (self::$test_mode === true) ? self::$test_PAYPAL_URL : self::$PAYPAL_URL;
 		return $url.$token.'&useraction=commit'; //useraction=commit ensures the payment is confirmed on PayPal, and not on a merchant confirm page.
 	}
-	
-	
+
+
 	function getPaymentFormFields() {
 		$logo = '<img src="' . self::$logo . '" alt="'._t('PayPalPayment.POWEREDBY',"Credit card payments powered by PayPal").'"/>';
 		$privacyLink = '<a href="' . self::$privacy_link . '" target="_blank" title="'._t('PayPalPayment.READPRIVACY',"Read PayPal's privacy policy").'">' . $logo . '</a><br/>';
@@ -387,7 +391,7 @@ class PayPalExpressCheckoutPayment extends Payment{
 			new LiteralField('PayPalInfo', $privacyLink),
 			new LiteralField(
 				'PayPalPaymentsList',
-				
+
 				//TODO: these methods aren't available in all countries
 				'<img src="payment/images/payments/methods/visa.jpg" alt="Visa"/>' .
 				'<img src="payment/images/payments/methods/mastercard.jpg" alt="MasterCard"/>' .
@@ -399,23 +403,23 @@ class PayPalExpressCheckoutPayment extends Payment{
 	}
 
 	function getPaymentFormRequirements() {return null;}
-	
+
 }
 
 class PaypalExpressCheckoutaPayment_Handler extends Controller{
-	
+
 	protected $payment = null; //only need to get this once
-	
+
 	static $allowed_actions = array(
 		'confirm',
 		'cancel'
 	);
-	
+
 	function payment(){
 		if($this->payment){
 			return $this->payment;
 		}
-		
+
 		if($token = Controller::getRequest()->getVar('token')){
 			$p =  DataObject::get_one('PayPalExpressCheckoutPayment',"\"Token\" = '$token' AND \"Status\" = 'Pending'");
 			$this->payment = $p;
@@ -423,52 +427,52 @@ class PaypalExpressCheckoutaPayment_Handler extends Controller{
 		}
 		return null;
 	}
-	
+
 	function confirm($request){
-		
+
 		//TODO: pretend the user confirmed, and skip straight to results. (check that this is allowed)
 		//TODO: get updated shipping details from paypal??
-		
+
 		if($payment = $this->payment()){
-			
+
 			if($pid = Controller::getRequest()->getVar('PayerID')){
 				$payment->PayerID = $pid;
 				$payment->write();
-				
+
 				$payment->confirmPayment();
 			}
-			
+
 		}else{
-			//something went wrong?	..perhaps trying to pay for a payment that has already been processed	
+			//something went wrong?	..perhaps trying to pay for a payment that has already been processed
 		}
-		
+
 		$this->doRedirect();
 		return;
 	}
-	
+
 	function cancel($request){
 
 		if($payment = $this->payment()){
-			
+
 			//TODO: do API call to gather further information
-			
+
 			$payment->Status = "Failure";
 			$payment->Message = _t('PayPalPayment.USERCANCELLED',"User cancelled");
 			$payment->write();
 		}
-		
+
 		$this->doRedirect();
 		return;
 	}
-	
+
 	function doRedirect(){
-		
+
 		$payment = $this->payment();
 		if($payment && $obj = $payment->PaidObject()){
 			Director::redirect($obj->Link());
 			return;
 		}
-		
+
 		Director::redirect(Director::absoluteURL('home',true)); //TODO: make this customisable in Payment_Controllers
 		return;
 	}

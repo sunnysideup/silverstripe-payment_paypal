@@ -23,7 +23,8 @@ Add the following to your mysite/_config.php, and populate values with the appro
 
 if(Director::isDev() || Director::isTest()){
 	PayPalExpressCheckoutPayment::set_test_config("TestPaypalAPIUsername","TestPaypalAPIPassword","TestPaypalSignature");
-}elseif(Director::isLive()){
+}
+elseif(Director::isLive()){
 	PayPalExpressCheckoutPayment::set_live_config("PaypalAPIUsername","PaypalAPIPassword","PaypalSignature",false);
 }
 
