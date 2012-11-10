@@ -1,0 +1,95 @@
+Index: trunk/code/PayPalExpressCheckoutPayment.php
+===================================================================
+--- trunk/code/PayPalExpressCheckoutPayment.php	(revision 3378)
++++ trunk/code/PayPalExpressCheckoutPayment.php	(working copy)
+@@ -21,7 +21,7 @@
+ 	
+ 	//PayPal URLs
+ 	protected static $test_API_Endpoint = "https://api-3t.sandbox.paypal.com/nvp";
+-	protected static $test_PAYPAL_URL = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=";
++	protected static $test_PAYPAL_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=";
+ 
+ 	protected static $API_Endpoint = "https://api-3t.paypal.com/nvp";
+ 	protected static $PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=";
+@@ -92,9 +92,9 @@
+ 		
+ 		if($paymenturl){
+ 			Director::redirect($paymenturl); //redirect to payment gateway
+-			return new Payment_Processing();
++			return new Payment_Processing(true);
+ 		}
+-		
++
+ 		$this->Message = _t('PayPalPayment.COULDNOTBECONTACTED',"PayPal could not be contacted");
+ 		$this->Status = 'Failure';
+ 		$this->write();
+@@ -154,6 +154,13 @@
+ 
+ 		);
+ 		
++		$taxAmount = $this->getTaxAmount();
++		if($taxAmount > 0)
++		{
++			$data['PAYMENTREQUEST_0_TAXAMT'] = $taxAmount;
++			$data['PAYMENTREQUEST_0_ITEMAMT'] = $data['PAYMENTREQUEST_0_AMT'] - $taxAmount;
++		}
++		
+ 		if(!isset($extradata['Name'])){
+ 			$arr =  array();
+ 			if(isset($extradata['FirstName'])) $arr[] = $extradata['FirstName'];
+@@ -185,7 +192,7 @@
+ 		$data = array_merge(self::$customsettings,$data);
+ 
+ 		$response = $this->apiCall('SetExpressCheckout',$data);
+-		
++	
+ 		if(!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")){
+ 			
+ 			$mode = (self::$test_mode === true) ? "test" : "live";
+@@ -227,6 +234,13 @@
+ 			'IPADDRESS' => urlencode($_SERVER['SERVER_NAME'])
+ 		);
+ 		
++		$taxAmount = $this->getTaxAmount();
++		if($taxAmount > 0)
++		{
++			$data['PAYMENTREQUEST_0_TAXAMT'] = $taxAmount;
++			$data['PAYMENTREQUEST_0_ITEMAMT'] = $data['PAYMENTREQUEST_0_AMT'] - $taxAmount;
++		}
++		
+ 		$response = $this->apiCall('DoExpressCheckoutPayment',$data);
+ 		
+ 		if(!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")){
+@@ -303,6 +317,32 @@
+ 		
+ 	}
+ 	
++	/** Tries to get the tax part of this payment.
++	 *
++	 * @return double the tax part of this payment, or 0 if no tax amount was
++	 * found
++	 */
++	 protected function getTaxAmount() {
++	 	 $paidObject = $this->PaidObject();
++	 	 if($paidObject && $paidObject instanceof Order)
++	 	 {
++	 	 	 // Have an e-commerce order, extract the tax amount (if any)
++	 	 	 $taxInfo = $paidObject->TaxInfo();
++	 	 	 if(!$taxInfo) { return 0; }
++	 	 	 
++	 	 	 
++	 	 	 $taxRate = $taxInfo->Rate;
++	 	 	 if($taxRate <= 0) { return 0; }
++	 	 	 
++	 	 	 // Calculate the proportion based on the amount that this payment is for
++	 	 	 $taxAmt = $this->Amount->Amount * ($taxRate / (1 + $taxRate));
++	 	 	 return round($taxAmt, 2);
++	 	 }
++	 	 
++	 	 // No tax
++	 	 return 0;
++	 }
++	
+ 	protected function getPendingReason($reason){
+ 		
+ 		switch($reason){
