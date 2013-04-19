@@ -532,11 +532,11 @@ class PayPalExpressCheckoutPayment_Handler extends Controller {
 		public static function set_url_segment($s){self::$url_segment = $s;}
 
 	public static function return_link() {
-		return Director::absoluteURL(self::$url_segment,true)."/confirm/"
+		return Director::absoluteURL(self::$url_segment,true)."/confirm/";
 	}
 
-	public static function cancel_link($custom) {
-		return Director::absoluteURL(self::$url_segment,true)."/cancel/"
+	public static function cancel_link() {
+		return Director::absoluteURL(self::$url_segment,true)."/cancel/";
 	}
 
 }
