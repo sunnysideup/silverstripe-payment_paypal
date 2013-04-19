@@ -23,7 +23,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 		'TransactionID' => 'Varchar(30)',
 		'AuthorisationCode' => 'Text'
 	);
-	protected static $logo = "ecommerce/images/payments/paypal.jpg";
+	protected static $logo = "ecommerce/images/paymentmethods/paypal.jpg";
 	protected static $payment_methods = array();
 
 	//PayPal URLs
