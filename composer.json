@@ -7,15 +7,22 @@
 	"license": "Sunny Side Up (BSD-3-Clause and CUSTOM)",
 	"authors":[
 		{
+			"name": "Jeremy Shipman",
+			"homepage": "https://github.com/burnbright",
+			"email" : "jeremy@burnbright.net",
+			"role" : "original developer"
+		},
+		{
 			"name": "Nicolaas Francken",
 			"homepage": "https://github.com/sunnysideup",
 			"email" : "modules@sunnysideup.co.nz",
-			"role" : "lead developer"
-		}
+			"role" : "adjuster"
+		},
+
 	],
 	"require":{
 		"php": ">=5.3.2",
-		"silverstripe/framework": ">=2.4.0",
-		"silverstripe/ecommerce": ">=2.4.0"
+		"silverstripe/framework": ">=3.0.0",
+		"silverstripe/ecommerce": ">=3.0.0"
 	}
 }
