@@ -104,7 +104,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 		$this->Status = "Pending";
 		$this->write();
 		if($paymenturl){
-			Director::redirect($paymenturl); //redirect to payment gateway
+			Controller::redirect($paymenturl); //redirect to payment gateway
 			/*
 			$page = new Page();
 
@@ -521,10 +521,10 @@ class PayPalExpressCheckoutPayment_Handler extends Controller {
 	protected function doRedirect(){
 		$payment = $this->payment();
 		if($payment && $obj = $payment->PaidObject()){
-			Director::redirect($obj->Link());
+			$this->redirect($obj->Link());
 			return;
 		}
-		Director::redirect(Director::absoluteURL('home',true)); //TODO: make this customisable in Payment_Controllers
+		$this->redirect(Director::absoluteURL('home',true)); //TODO: make this customisable in Payment_Controllers
 		return;
 	}
 
