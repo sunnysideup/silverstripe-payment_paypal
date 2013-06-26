@@ -306,7 +306,9 @@ HTML;
 					"\nSignature: ".self::$API_Signature.
 					"\nRequest Data: ".print_r($data,true).
 					"\nResponse: ".print_r($response,true);
-			Debug::log($debugmessage);
+			if(Director::isDev()){
+				Debug::log($debugmessage);
+			}
 			return null;
 		}
 		//get and save token for later
