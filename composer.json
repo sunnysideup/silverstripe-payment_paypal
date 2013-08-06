@@ -17,7 +17,7 @@
 			"homepage": "https://github.com/sunnysideup",
 			"email" : "modules@sunnysideup.co.nz",
 			"role" : "adjuster"
-		},
+		}
 
 	],
 	"require":{
