@@ -104,7 +104,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 		$this->Status = "Pending";
 		$this->write();
 		if($paymenturl){
-			Controller::redirect($paymenturl); //redirect to payment gateway
+			Controller::curr()->redirect($paymenturl); //redirect to payment gateway
 			/*
 			$page = new Page();
 
