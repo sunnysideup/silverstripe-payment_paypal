@@ -17,32 +17,32 @@
 class PayPalExpressCheckoutPayment extends EcommercePayment {
 
 
-	static $db = array(
+	private static $db = array(
 		'Token' => 'Varchar(30)',
 		'PayerID' => 'Varchar(30)',
 		'TransactionID' => 'Varchar(30)',
 		'AuthorisationCode' => 'Text'
 	);
-	protected static $logo = "ecommerce/images/paymentmethods/paypal.jpg";
-	protected static $payment_methods = array();
+	private static $logo = "ecommerce/images/paymentmethods/paypal.jpg";
+	private static $payment_methods = array();
 
 	//PayPal URLs
-	protected static $test_API_Endpoint = "https://api-3t.sandbox.paypal.com/nvp";
-	protected static $test_PAYPAL_URL = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=";
-	protected static $API_Endpoint = "https://api-3t.paypal.com/nvp";
-	protected static $PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=";
-	protected static $privacy_link = "https://www.paypal.com/us/cgi-bin/webscr?cmd=p/gen/ua/policy_privacy-outside";
+	private static $test_API_Endpoint = "https://api-3t.sandbox.paypal.com/nvp";
+	private static $test_PAYPAL_URL = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=";
+	private static $API_Endpoint = "https://api-3t.paypal.com/nvp";
+	private static $PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=";
+	private static $privacy_link = "https://www.paypal.com/us/cgi-bin/webscr?cmd=p/gen/ua/policy_privacy-outside";
 
 	//config
-	protected static $test_mode = true; //on by default
-	protected static $API_UserName;
-	protected static $API_Password;
-	protected static $API_Signature;
-	protected static $sBNCode = null; // BN Code 	is only applicable for partners
-	protected static $version = '64';
+	private static $test_mode = true; //on by default
+	private static $API_UserName;
+	private static $API_Password;
+	private static $API_Signature;
+	private static $sBNCode = null; // BN Code 	is only applicable for partners
+	private static $version = '64';
 
 	//set custom settings
-	protected static $custom_settings = array(
+	private static $custom_settings = array(
 		//design
 		//'HDRIMG' => "http://www.mysite.com/images/logo.jpg", //max size = 750px wide by 90px high, and good to be on secure server
 		//'HDRBORDERCOLOR' => 'CCCCCC', //header border
@@ -476,7 +476,7 @@ class PayPalExpressCheckoutPayment_Handler extends Controller {
 
 	protected $payment = null; //only need to get this once
 
-	static $allowed_actions = array(
+	private static $allowed_actions = array(
 		'confirm',
 		'cancel'
 	);
@@ -494,7 +494,8 @@ class PayPalExpressCheckoutPayment_Handler extends Controller {
 			return $this->payment;
 		}
 		elseif($token = Controller::getRequest()->getVar('token')){
-			$p =  PayPalExpressCheckoutPayment::get()->filter(array("Token" => $token, "Status" => "Pending"))->First();
+			$p =  PayPalExpressCheckoutPayment::get()
+				->filter(array("Token" => $token, "Status" => "Pending"))->First();
 			$this->payment = $p;
 			return $p;
 		}
