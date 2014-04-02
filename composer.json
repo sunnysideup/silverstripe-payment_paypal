@@ -22,5 +22,8 @@
 	],
 	"require":{
 		"sunnysideup/ecommerce": "dev-master"
+	},
+	"extra": {
+		"installer-name": "payment_paypal"
 	}
 }
