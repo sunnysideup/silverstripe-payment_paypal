@@ -18,7 +18,6 @@
 			"email" : "modules@sunnysideup.co.nz",
 			"role" : "adjuster"
 		}
-
 	],
 	"require":{
 		"sunnysideup/ecommerce": "dev-master"
