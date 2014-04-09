@@ -55,29 +55,6 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 		//'NOSHIPPING' => 1 //disable showing shipping details
 	);
 
-	private static function set_config_details($username,$password,$signature,$testmode = true){
-		self::$API_UserName = $username;
-		self::$API_Password = $password;
-		self::$API_Signature = $signature;
-		//self::$sBNCode = $sbncode;
-		self::$test_mode = $testmode;
-	}
-
-	static function set_live_config($username,$password,$signature){
-		self::set_config_details($username,$password,$signature,false);
-	}
-
-	static function set_test_config($username,$password,$signature){
-		self::set_config_details($username,$password,$signature,true);
-	}
-
-	static function set_payment_methods($a){
-		self::$payment_methods = $a;
-	}
-
-	static function set_custom_settings(array $design){
-		self::$custom_settings = array_merge(self::$custom_settings,$design);
-	}
 
 	function getPaymentFormFields() {
 		$logo = '<img src="' . self::$logo . '" alt="Credit card payments powered by PayPal"/>';

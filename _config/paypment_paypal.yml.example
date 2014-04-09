@@ -1,0 +1,65 @@
+---
+Name: payment_paypal
+Before: 'mysite/*'
+After: 'framework/*','cms/*'
+---
+PayPalExpressCheckoutPayment:
+  test_mode: true
+  API_UserName: true
+  API_Password: true
+  sBNCode: true
+  version: true
+  custom_settings:
+    # max size = 750px wide by 90px high, and good to be on secure server
+		HDRIMG: "http://www.mysite.com/images/logo.jpg"
+		# header border
+		HDRBORDERCOLOR: 'CCCCCC'
+		# header background
+		HDRBACKCOLOR: '00FFFF'
+		# payflow colour
+		PAYFLOWCOLOR: 'AAAAAA'
+		#page style set in merchant account settings
+		PAGESTYLE: ''
+		# require paypal account, or not. Can be or 'Mark' (required) or 'Sole' (not required)
+		SOLUTIONTYPE: 'Sole'
+		# override business name in checkout
+		BRANDNAME: 'my site name'
+		# number to call to resolve payment issues
+		CUSTOMERSERVICENUMBER:'0800 1234 5689'
+		# disable showing shipping details
+		NOSHIPPING:1
+
+
+
+---
+
+only:
+  environment: 'live'
+
+---
+
+PayPalExpressCheckoutPayment:
+  test_mode: true
+  API_UserName: true
+  API_Password: true
+  sBNCode: true
+  version: true
+  custom_settings:
+    # max size = 750px wide by 90px high, and good to be on secure server
+		HDRIMG: "http://www.mysite.com/images/logo.jpg"
+		# header border
+		HDRBORDERCOLOR: 'CCCCCC'
+		# header background
+		HDRBACKCOLOR: '00FFFF'
+		# payflow colour
+		PAYFLOWCOLOR: 'AAAAAA'
+		#page style set in merchant account settings
+		PAGESTYLE: ''
+		# require paypal account, or not. Can be or 'Mark' (required) or 'Sole' (not required)
+		SOLUTIONTYPE: 'Sole'
+		# override business name in checkout
+		BRANDNAME: 'my site name'
+		# number to call to resolve payment issues
+		CUSTOMERSERVICENUMBER:'0800 1234 5689'
+		# disable showing shipping details
+		NOSHIPPING:1
