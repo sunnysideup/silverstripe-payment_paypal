@@ -110,7 +110,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 	function PayPalForm() {
 		Requirements::javascript(THIRDPARTY_DIR . '/jquery/jquery.js');
 
-		// 1) Main Informations
+		// 1) Main Information
 		$fields = '';
 		$order = $this->Order();
 		$items = $order->Items();
