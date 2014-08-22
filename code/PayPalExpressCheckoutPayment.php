@@ -57,8 +57,8 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 
 
 	function getPaymentFormFields() {
-		$logo = '<img src="' . self::$logo . '" alt="Credit card payments powered by PayPal"/>';
-		$privacyLink = '<a href="' . self::$privacy_link . '" target="_blank" title="Read PayPal\'s privacy policy">' . $logo . '</a><br/>';
+		$logo = '<img src="' . $this->Config()->get("logo") . '" alt="Credit card payments powered by PayPal"/>';
+		$privacyLink = '<a href="' . $this->Config()->get("privacy_link") . '" target="_blank" title="Read PayPal\'s privacy policy">' . $logo . '</a><br/>';
 		return new FieldList(
 			new LiteralField('PayPalInfo', $privacyLink),
 			new LiteralField(
@@ -73,7 +73,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 	//main processing function
 	function processPayment($data, $form) {
 		//sanity checks for credentials
-		if(!self::$API_UserName || !self::$API_Password || !self::$API_Signature){
+		if(!$this->Config()->get("API_UserName") || !$this->Config()->get("API_Password") || !$this->Config()->get("API_Signature")){
 			user_error('You are attempting to make a payment without the necessary credentials set', E_USER_ERROR);
 		}
 		$data = $this->Order()->BillingAddress()->toMap();
@@ -86,7 +86,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 			$page = new Page();
 
 			$page->Title = 'Redirection to PayPal...';
-			$page->Logo = '<img src="' . self::$logo . '" alt="Payments powered by PayPal"/>';
+			$page->Logo = '<img src="' . $this->Config()->get("logo") . '" alt="Payments powered by PayPal"/>';
 			$page->Form = $this->PayPalForm();
 
 			$controller = new Page_Controller($page);
@@ -118,7 +118,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 
 		// 2) Main Settings
 
-		$url = self::$test_mode ? self::$test_url : self::$url;
+		$url = $this->Config()->get("test_mode") ? $this->Config()->get("test_url") : $this->Config()->get("url");
 		$inputs['cmd'] = '_cart';
 		$inputs['upload'] = '1';
 
@@ -134,7 +134,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 
 		// 4) Payment Informations And Authorisation Code
 
-		$inputs['business'] = self::$test_mode ? self::$test_account_email : self::$account_email;
+		$inputs['business'] = $this->Config()->get("test_mode") ? $this->Config()->get("test_account_email") : $this->Config()->get("account_email");
 		$inputs['custom'] = $this->ID . '-' . $this->AuthorisationCode;
 		// Add Here The Shipping And/Or Taxes
 		$inputs['currency_code'] = $this->Currency;
@@ -148,15 +148,15 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 
 		// 6) PayPal Pages Style Optional Informations
 
-		if(self:: $continue_button_text) $inputs['cbt'] = self::$continue_button_text;
+		if(self:: $continue_button_text) $inputs['cbt'] = $this->Config()->get("continue_button_text");
 
-		if(self::$header_image_url) $inputs['cpp_header_image'] = urlencode(self::$header_image_url);
-		if(self::$header_back_color) $inputs['cpp_headerback_color'] = self::$header_back_color;
-		if(self::$header_border_color) $inputs['cpp_headerborder_color'] = self::$header_border_color;
-		if(self::$payflow_color) $inputs['cpp_payflow_color'] = self::$payflow_color;
-		if(self::$back_color) $inputs['cs'] = self::$back_color;
-		if(self::$image_url) $inputs['image_url'] = urlencode(self::$image_url);
-		if(self::$page_style) $inputs['page_style'] = self::$page_style;
+		if($this->Config()->get("header_image_url")) $inputs['cpp_header_image'] = urlencode($this->Config()->get("header_image_url"));
+		if($this->Config()->get("header_back_color")) $inputs['cpp_headerback_color'] = $this->Config()->get("header_back_color");
+		if($this->Config()->get("header_border_color")) $inputs['cpp_headerborder_color'] = $this->Config()->get("header_border_color");
+		if($this->Config()->get("payflow_color")) $inputs['cpp_payflow_color'] = $this->Config()->get("payflow_color");
+		if($this->Config()->get("back_color")) $inputs['cs'] = $this->Config()->get("back_color");
+		if($this->Config()->get("image_url")) $inputs['image_url'] = urlencode($this->Config()->get("image_url"));
+		if($this->Config()->get("page_style")) $inputs['page_style'] = $this->Config()->get("page_style");
 
 		// 7) Prepopulating Customer Informations
 		$billingAddress = $order->BillingAddress();
@@ -270,17 +270,17 @@ HTML;
 			}
 		}
 		//set design settings
-		$data = array_merge(self::$custom_settings,$data);
+		$data = array_merge($this->Config()->get("custom_settings"),$data);
 		$response = $this->apiCall('SetExpressCheckout',$data);
 		if(!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")){
-			$mode = (self::$test_mode === true) ? "test" : "live";
+			$mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
 			$debugmessage = "PayPal Debug:" .
 					"\nMode: $mode".
 					"\nAPI url: ".$this->getApiEndpoint().
-					"\nRedirect url: ".$this->getPayPalURL("TOKENGOESHERE").
-					"\nUsername: " .self::$API_UserName.
-					"\nPassword: " .self::$API_Password.
-					"\nSignature: ".self::$API_Signature.
+					"\nRedirect url: ".$this->getPayPalURL($response['TOKEN']).
+					"\nUsername: " .$this->Config()->get("API_UserName").
+					"\nPassword: " .$this->Config()->get("API_Password").
+					"\nSignature: ".$this->Config()->get("API_Signature").
 					"\nRequest Data: ".print_r($data,true).
 					"\nResponse: ".print_r($response,true);
 			if(Director::isDev()){
@@ -400,11 +400,11 @@ HTML;
 	protected function apiCall($method,$data = array()){
 		$postfields = array(
 			'METHOD' => $method,
-			'VERSION' => self::$version,
-			'USER' => self::$API_UserName,
-			'PWD'=> self::$API_Password,
-			'SIGNATURE' => self::$API_Signature,
-			'BUTTONSOURCE' => self::$sBNCode
+			'VERSION' => $this->Config()->get("version"),
+			'USER' => $this->Config()->get("API_UserName"),
+			'PWD'=> $this->Config()->get("API_Password"),
+			'SIGNATURE' => $this->Config()->get("API_Signature"),
+			'BUTTONSOURCE' => $this->Config()->get("sBNCode")
 		);
 		$postfields = array_merge($postfields,$data);
 		//Make POST request to Paypal via RESTful service
@@ -434,11 +434,11 @@ HTML;
 	}
 
 	protected function getApiEndpoint(){
-		return (self::$test_mode === true) ? self::$test_API_Endpoint : self::$API_Endpoint;
+		return ($this->Config()->get("test_mode") === true) ? $this->Config()->get("test_API_Endpoint") : $this->Config()->get("API_Endpoint");
 	}
 
 	protected function getPayPalURL($token){
-		$url = (self::$test_mode === true) ? self::$test_PAYPAL_URL : self::$PAYPAL_URL;
+		$url = ($this->Config()->get("test_mode") === true) ? $this->Config()->get("test_PAYPAL_URL") : $this->Config()->get("PAYPAL_URL");
 		return $url.$token.'&useraction=commit'; //useraction=commit ensures the payment is confirmed on PayPal, and not on a merchant confirm page.
 	}
 
@@ -450,6 +450,7 @@ HTML;
  */
 class PayPalExpressCheckoutPayment_Handler extends Controller {
 
+	private static $url_segment = 'paypalexpresscheckoutpayment_handler';
 
 	protected $payment = null; //only need to get this once
 
@@ -516,14 +517,12 @@ class PayPalExpressCheckoutPayment_Handler extends Controller {
 		return;
 	}
 
-	private static $url_segment = 'paypalexpresscheckoutpayment_handler';
-
 	public static function return_link() {
-		return Director::absoluteURL(self::$url_segment,true)."/confirm/";
+		return Director::absoluteURL(Config::inst()->get("PayPalExpressCheckoutPayment_Handler", "url_segment"),true)."/confirm/";
 	}
 
 	public static function cancel_link() {
-		return Director::absoluteURL(self::$url_segment,true)."/cancel/";
+		return Director::absoluteURL(Config::inst()->get("PayPalExpressCheckoutPayment_Handler", "url_segment"),true)."/cancel/";
 	}
 
 }
