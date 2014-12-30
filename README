@@ -1,32 +1,74 @@
-Paypal Payment Type
+E-commerce Paypal Payment
+================================================================================
+
+Add the Paypal payment option to your e-commerce install
+
+
+Developers
+-----------------------------------------------
+Nicolaas Francken [at] sunnysideup.co.nz
+
+
+Documentation
+-----------------------------------------------
+Please contact author for more details.
+
+Any bug reports and/or feature requests will be
+looked at
+
+We are also very happy to provide personalised support
+for this module in exchange for a small donation.
+
+
+Requirements
+-----------------------------------------------
+see composer.json
+
+Project Home
+-----------------------------------------------
+See http://code.google.com/p/silverstripe-ecommerce
+
+Demo
+-----------------------------------------------
+See http://www.silverstripe-ecommerce.com
+
+
+Installation Instructions
+-----------------------------------------------
+
+1. Find out how to add modules to SS and add module as per usual.
+
+2. Review configs and add entries to mysite/_config/config.yml
+(or similar) as necessary.
+In the _config/ folder of this module
+you can usually find some examples of config options (if any).
 
 
 Testing setup:
+-----------------------------------------------
 You will need a PayPal sandbox account, along with merchant and customer test accounts,
 which can be set up by following this guide:
 https://developer.paypal.com/en_US/pdf/PP_Sandbox_UserGuide.pdf
 
+
 How to set up your paypal account:
--Set up a paypal merchant account
--Log in
--Visit 'My Account' > 'Profile'
--Click 'API Access' link (listed under Account Information)
--Click option 2 : 'Request API credentials'
--Choose 'Request API signature', and click 'Agree and Submit'
--Enter these details into your mysite/_config.php file with either the set_config_details or set_test_config_details functions
+-----------------------------------------------
+ - Set up a paypal merchant account
+ - Log in
+ - Visit 'My Account' > 'Profile'
+ - Click 'API Access' link (listed under Account Information)
+ - Click option 2 : 'Request API credentials'
+ - Choose 'Request API signature', and click 'Agree and Submit'
+ - Enter these details into your mysite/_config.php file with either the set_config_details or set_test_config_details functions
+
+
 Notes / Troubleshooting:
+-----------------------------------------------
  -you must be logged into sandbox to process a test payment.
 
 
-Add the following to your mysite/_config.php, and populate values with the appropriate information from your Paypal account:
-
-
-if(Director::isDev() || Director::isTest()){
-	PayPalExpressCheckoutPayment::set_test_config("TestPaypalAPIUsername","TestPaypalAPIPassword","TestPaypalSignature");
-}
-elseif(Director::isLive()){
-	PayPalExpressCheckoutPayment::set_live_config("PaypalAPIUsername","PaypalAPIPassword","PaypalSignature",false);
-}
 
 Troubleshooting:
-If you get the message "PayPal could not be contacted" , check your debug.log file, found in the root of your site. This will contain debugging information.
+-----------------------------------------------
+If you get the message "PayPal could not be contacted" , check your debug.log file, found in the root of your site.
+This will contain debugging information.
