@@ -108,6 +108,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 	 * depracated
 	 */
 	function PayPalForm() {
+		user_error("This form is no longer used.");
 		Requirements::javascript(THIRDPARTY_DIR . '/jquery/jquery.js');
 
 		// 1) Main Information
@@ -249,6 +250,7 @@ HTML;
 			if(isset($extradata['Surname'])) $arr[] = $extradata['Surname'];
 			$extradata['Name'] = implode(' ',$arr);
 		}
+		$extradata["OrderID"] = SiteConfig::current_site_config()->Title." ".$this->Order()->getTitle();
 		//add member & shipping fields, etc ...this will pre-populate the paypal login / create account form
 		foreach(array(
 			'Email' => 'EMAIL',
