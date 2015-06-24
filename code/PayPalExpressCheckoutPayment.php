@@ -290,7 +290,7 @@ HTML;
 					"\nRequest Data: ".print_r($data,true).
 					"\nResponse: ".print_r($response,true);
 			if(Director::isDev() || self::$debug){
-				Debug::log($debugmessage);
+				Debug::log("DEBUG MESSAGE: ".$debugmessage);
 			}
 			return null;
 		}
