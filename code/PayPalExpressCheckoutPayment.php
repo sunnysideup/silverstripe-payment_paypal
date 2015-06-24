@@ -276,7 +276,7 @@ HTML;
 		$data = array_merge($this->Config()->get("custom_settings"),$data);
 		$response = $this->apiCall('SetExpressCheckout',$data);
 		if(Director::isDev() || self::$debug){
-			Debug::log($debugmessage);
+			Debug::log("RESPONSE: ".print_r($response, 1));
 		}
 		if(!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")){
 			$mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
@@ -413,7 +413,10 @@ HTML;
 			'BUTTONSOURCE' => $this->Config()->get("sBNCode")
 		);
 		if(Director::isDev() || self::$debug) {
-			debug::log(print_r($postfields, 1));
+			debug::log("POST FIELDS: ".print_r($postfields, 1));
+		}
+		if(Director::isDev() || self::$debug) {
+			debug::log("ADD POINT: ".print_r($this->getApiEndpoint(), 1));
 		}
 		$postfields = array_merge($postfields,$data);
 		//Make POST request to Paypal via RESTful service
