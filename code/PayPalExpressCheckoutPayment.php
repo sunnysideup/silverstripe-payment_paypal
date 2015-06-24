@@ -16,6 +16,7 @@
 
 class PayPalExpressCheckoutPayment extends EcommercePayment {
 
+	private static $debug = false;
 
 	private static $db = array(
 		'Token' => 'Varchar(30)',
@@ -274,6 +275,9 @@ HTML;
 		//set design settings
 		$data = array_merge($this->Config()->get("custom_settings"),$data);
 		$response = $this->apiCall('SetExpressCheckout',$data);
+		if(Director::isDev() || self::$debug){
+			Debug::log($debugmessage);
+		}
 		if(!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")){
 			$mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
 			$debugmessage = "PayPal Debug:" .
@@ -285,7 +289,7 @@ HTML;
 					"\nSignature: ".$this->Config()->get("API_Signature").
 					"\nRequest Data: ".print_r($data,true).
 					"\nResponse: ".print_r($response,true);
-			if(Director::isDev()){
+			if(Director::isDev() || self::$debug){
 				Debug::log($debugmessage);
 			}
 			return null;
@@ -408,12 +412,18 @@ HTML;
 			'SIGNATURE' => $this->Config()->get("API_Signature"),
 			'BUTTONSOURCE' => $this->Config()->get("sBNCode")
 		);
+		if(Director::isDev() || self::$debug) {
+			debug::log(print_r($postfields, 1));
+		}
 		$postfields = array_merge($postfields,$data);
 		//Make POST request to Paypal via RESTful service
 		$rs = new RestfulService($this->getApiEndpoint(),0); //REST connection that will expire immediately
 		$rs->httpHeader('Accept: application/xml');
 		$rs->httpHeader('Content-Type: application/x-www-form-urlencoded');
 		$response = $rs->request('','POST',http_build_query($postfields));
+		if(Director::isDev() || self::$debug) {
+			debug::log(print_r($response, 1));
+		}
 		return $this->deformatNVP($response->getBody());
 	}
 
