@@ -277,21 +277,19 @@ HTML;
 		$response = $this->apiCall('SetExpressCheckout',$data);
 		if(Director::isDev() || self::$debug){
 			Debug::log("RESPONSE: ".print_r($response, 1));
+			$debugmessage = "PayPal Debug:" .
+				"\nMode: $mode".
+				"\nAPI url: ".$this->getApiEndpoint().
+				"\nRedirect url: ".$this->getPayPalURL($response['TOKEN']).
+				"\nUsername: " .$this->Config()->get("API_UserName").
+				"\nPassword: " .$this->Config()->get("API_Password").
+				"\nSignature: ".$this->Config()->get("API_Signature").
+				"\nRequest Data: ".print_r($data,true).
+				"\nResponse: ".print_r($response,true);
+			Debug::log("DEBUG MESSAGE: ".$debugmessage);
 		}
 		if(!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")){
 			$mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
-			$debugmessage = "PayPal Debug:" .
-					"\nMode: $mode".
-					"\nAPI url: ".$this->getApiEndpoint().
-					"\nRedirect url: ".$this->getPayPalURL($response['TOKEN']).
-					"\nUsername: " .$this->Config()->get("API_UserName").
-					"\nPassword: " .$this->Config()->get("API_Password").
-					"\nSignature: ".$this->Config()->get("API_Signature").
-					"\nRequest Data: ".print_r($data,true).
-					"\nResponse: ".print_r($response,true);
-			if(Director::isDev() || self::$debug){
-				Debug::log("DEBUG MESSAGE: ".$debugmessage);
-			}
 			return null;
 		}
 		//get and save token for later
