@@ -474,7 +474,7 @@ class PayPalExpressCheckoutPayment_Handler extends Controller {
 
 	public function Link($action = null) {
 		return Controller::join_links(
-			Director::baseURL(), 
+			Director::baseURL(),
 			$this->Config()->get("url_segment"),
 			$action
 		);
