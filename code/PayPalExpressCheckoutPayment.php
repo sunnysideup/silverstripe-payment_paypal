@@ -96,7 +96,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
 
 			return new Payment_Processing($form);
 			*/
-			return new Payment_Processing();
+			return new EcommercePayment_Processing();
 		}
 		$this->Message = _t('PayPalExpressCheckoutPayment.COULDNOTBECONTACTED',"PayPal could not be contacted");
 		$this->Status = 'Failure';
