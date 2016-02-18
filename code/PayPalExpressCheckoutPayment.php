@@ -275,7 +275,7 @@ HTML;
 		//set design settings
 		$data = array_merge($this->Config()->get("custom_settings"),$data);
 		$response = $this->apiCall('SetExpressCheckout',$data);
-		if(Director::isDev() || self::$debug){
+		if(Config::inst()->get("PayPalExpressCheckoutPayment", "debug")){
 			Debug::log("RESPONSE: ".print_r($response, 1));
 			$debugmessage = "PayPal Debug:" .
 				"\nMode: $mode".
@@ -410,10 +410,10 @@ HTML;
 			'SIGNATURE' => $this->Config()->get("API_Signature"),
 			'BUTTONSOURCE' => $this->Config()->get("sBNCode")
 		);
-		if(Director::isDev() || self::$debug) {
+		if(Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
 			debug::log("POST FIELDS: ".print_r($postfields, 1));
 		}
-		if(Director::isDev() || self::$debug) {
+		if(Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
 			debug::log("ADD POINT: ".print_r($this->getApiEndpoint(), 1));
 		}
 		$postfields = array_merge($postfields,$data);
@@ -422,7 +422,7 @@ HTML;
 		$rs->httpHeader('Accept: application/xml');
 		$rs->httpHeader('Content-Type: application/x-www-form-urlencoded');
 		$response = $rs->request('','POST',http_build_query($postfields));
-		if(Director::isDev() || self::$debug) {
+		if(Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
 			debug::log(print_r($response, 1));
 		}
 		return $this->deformatNVP($response->getBody());
