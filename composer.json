@@ -1,28 +1,35 @@
 {
-	"name": "sunnysideup/payment_paypal",
-	"type": "silverstripe-module",
-	"description": "add paypal to your payment options for the silverstripe payment and ecommerce modules",
-	"homepage": "http://www.silverstripe-ecommerce.com",
-	"keywords": ["ecommerce", "e-commerce", "shop", "paypal","pay pal", "silverstripe", "payment", "pay now"],
-	"license": "Sunny Side Up (BSD-3-Clause and CUSTOM)",
-	"authors":[
-		{
-			"name": "Jeremy Shipman",
-			"homepage": "https://github.com/burnbright",
-			"email" : "jeremy@burnbright.net",
-			"role" : "original developer"
-		},
-		{
-			"name": "Nicolaas Francken",
-			"homepage": "https://github.com/sunnysideup",
-			"email" : "modules@sunnysideup.co.nz",
-			"role" : "adjuster"
-		}
-	],
-	"require":{
-		"sunnysideup/ecommerce": "dev-master"
-	},
-	"extra": {
-		"installer-name": "payment_paypal"
-	}
+    "name": "sunnysideup/payment_paypal",
+    "type": "silverstripe-module",
+    "description": "add paypal to your payment options for the silverstripe payment and ecommerce modules",
+    "keywords": [
+        "ecommerce",
+        "e-commerce",
+        "shop",
+        "paypal",
+        "pay pal",
+        "silverstripe",
+        "payment",
+        "pay now"
+    ],
+    "license": "Sunny Side Up (BSD-3-Clause and CUSTOM)",
+    "authors": [
+        {
+            "name": "Jeremy Shipman",
+            "email": "jeremy@burnbright.net",
+            "role": "original developer"
+        },
+        {
+            "name": "Nicolaas Francken",
+            "homepage": "https://github.com/sunnysideup",
+            "email": "modules@sunnysideup.co.nz",
+            "role": "adjuster"
+        }
+    ],
+    "require": {
+        "sunnysideup/ecommerce": "dev-master"
+    },
+    "extra": {
+        "installer-name": "payment_paypal"
+    }
 }
