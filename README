@@ -70,5 +70,4 @@ Notes / Troubleshooting:
 
 Troubleshooting:
 -----------------------------------------------
-If you get the message "PayPal could not be contacted" , check your debug.log file, found in the root of your site.
-This will contain debugging information.
+If you get the message "PayPal could not be contacted", turn on debugging.
