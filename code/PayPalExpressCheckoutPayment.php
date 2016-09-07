@@ -57,6 +57,14 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
         //'NOSHIPPING' => 1 //disable showing shipping details
     );
 
+    function getCMSFields() {
+        $fields = parent::getCMSFields();
+        foreach(array_keys(self::$db) as $field) {
+            $fields->removeFieldFromTab('Root.Main', $field);
+            $fields->addFieldToTab('Root.Advanced', LiteralField::create($field.'_debug', '<h2>'.$field.'</h2><pre>'.$this->$field.'</pre>'));
+        }
+        return $fields;
+    }
 
     function getPaymentFormFields() {
         $logo = '<img src="' . $this->Config()->get("logo") . '" alt="Credit card payments powered by PayPal"/>';
@@ -84,19 +92,6 @@ class PayPalExpressCheckoutPayment extends EcommercePayment {
         $this->write();
         if($paymenturl){
             Controller::curr()->redirect($paymenturl); //redirect to payment gateway
-            /*
-            $page = new Page();
-
-            $page->Title = 'Redirection to PayPal...';
-            $page->Logo = '<img src="' . $this->Config()->get("logo") . '" alt="Payments powered by PayPal"/>';
-            $page->Form = $this->PayPalForm();
-
-            $controller = new Page_Controller($page);
-
-            $form = $controller->renderWith('PaymentProcessingPage');
-
-            return new Payment_Processing($form);
-            */
             return EcommercePayment_Processing::create();
         }
         $this->Message = _t('PayPalExpressCheckoutPayment.COULDNOTBECONTACTED',"PayPal could not be contacted");
@@ -317,7 +312,8 @@ HTML;
             return null;
         }
         if(isset($response["PAYMENTINFO_0_TRANSACTIONID"])){
-            $this->TransactionID	= $response["PAYMENTINFO_0_TRANSACTIONID"]; 	//' Unique transaction ID of the payment. Note:  If the PaymentAction of the request was Authorization or Order, this value is your AuthorizationID for use with the Authorization & Capture APIs.
+            //' Unique transaction ID of the payment. Note:  If the PaymentAction of the request was Authorization or Order, this value is your AuthorizationID for use with the Authorization & Capture APIs.
+            $this->TransactionID	= $response["PAYMENTINFO_0_TRANSACTIONID"];
         }
         //$transactionType 		= $response["PAYMENTINFO_0_TRANSACTIONTYPE"]; //' The type of transaction Possible values: l  cart l  express-checkout
         //$paymentType			= $response["PAYMENTTYPE"];  	//' Indicates whether the payment is instant or delayed. Possible values: l  none l  echeck l  instant
@@ -403,6 +399,9 @@ HTML;
      * Handles actual communication with API server.
      */
     protected function apiCall($method,$data = array()){
+        $this->addDebugInfo('---------------------------------------');
+        $this->addDebugInfo('---------------------------------------');
+        $this->addDebugInfo('---------------------------------------');
         $postfields = array(
             'METHOD' => $method,
             'VERSION' => $this->Config()->get("version"),
@@ -412,10 +411,9 @@ HTML;
             'BUTTONSOURCE' => $this->Config()->get("sBNCode")
         );
         if(Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
-            $this->addDebugInfo("POST FIELDS: ".print_r($postfields, 1));
-        }
-        if(Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
-            $this->addDebugInfo("ADD POINT: ".print_r($this->getApiEndpoint(), 1));
+            $this->addDebugInfo("STANDARD POSTING FIELDS ....  //// : ".print_r($postfields, 1));
+            $this->addDebugInfo("ADDITIONAL POSTING FIELDS ....  //// : ".print_r($data, 1));
+            $this->addDebugInfo("SENDING TO ....  //// : ".print_r($this->getApiEndpoint(), 1));
         }
         $postfields = array_merge($postfields,$data);
         //Make POST request to Paypal via RESTful service
@@ -424,7 +422,7 @@ HTML;
         $rs->httpHeader('Content-Type: application/x-www-form-urlencoded');
         $response = $rs->request('','POST',http_build_query($postfields));
         if(Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
-            $this->addDebugInfo(print_r($response, 1));
+            $this->addDebugInfo('RESPONSE ....  //// : '.print_r($response, 1));
         }
         return $this->deformatNVP($response->getBody());
     }
@@ -490,10 +488,12 @@ class PayPalExpressCheckoutPayment_Handler extends Controller {
             return $this->payment;
         }
         elseif($token = Controller::getRequest()->getVar('token')){
-            $p =  PayPalExpressCheckoutPayment::get()
-                ->filter(array("Token" => $token, "Status" => "Pending"))->First();
-            $this->payment = $p;
-            return $p;
+            $payment =  PayPalExpressCheckoutPayment::get()
+                ->filter(array("Token" => $token, "Status" => "Pending"))
+                ->first();
+            $this->payment = $payment;
+            $this->payment->init();
+            return $this->payment;
         }
         return null;
     }
