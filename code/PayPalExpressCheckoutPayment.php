@@ -94,7 +94,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         }
         $data = $this->Order()->BillingAddress()->toMap();
         $paymenturl = $this->getTokenURL($this->Amount->Amount, $this->Amount->Currency, $data);
-        $this->Status = "Pending";
+        $this->Status = "Incomplete";
         $this->write();
         if ($paymenturl) {
             Controller::curr()->redirect($paymenturl); //redirect to payment gateway
@@ -526,7 +526,12 @@ class PayPalExpressCheckoutPayment_Handler extends Controller
             return $this->payment;
         } elseif ($token = Controller::getRequest()->getVar('token')) {
             $payment =  PayPalExpressCheckoutPayment::get()
-                ->filter(array("Token" => $token, "Status" => "Pending"))
+                ->filter(
+                    array(
+                        "Token" => $token,
+                        "Status" => "Incomplete"
+                    )
+                )
                 ->first();
             $this->payment = $payment;
             $this->payment->init();
