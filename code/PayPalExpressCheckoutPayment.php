@@ -67,7 +67,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         return $fields;
     }
 
-    public function getPaymentFormFields()
+    public function getPaymentFormFields($amount = 0, $order = NULL)
     {
         $logo = '<img src="' . $this->Config()->get("logo") . '" alt="Credit card payments powered by PayPal"/>';
         $privacyLink = '<a href="' . $this->Config()->get("privacy_link") . '" target="_blank" title="Read PayPal\'s privacy policy">' . $logo . '</a><br/>';
