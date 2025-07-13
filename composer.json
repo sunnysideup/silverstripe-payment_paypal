@@ -32,7 +32,5 @@
         "sunnysideup/ecommerce": "*",
         "silverstripe/recipe-cms": "*"
     },
-    "extra": {
-        "installer-name": "payment_paypal"
-    }
+    "extra": []
 }
