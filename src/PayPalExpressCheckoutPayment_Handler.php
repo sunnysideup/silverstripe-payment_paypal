@@ -85,11 +85,29 @@ class PayPalExpressCheckoutPayment_Handler extends Controller
 
     public static function return_link()
     {
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: Config::inst()->get("
+  * NEW: Config::inst()->get(" ...  (COMPLEX)
+  * EXP: Check if you should be using Name::class here instead of hard-coded class.
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
         return Director::absoluteURL(Config::inst()->get("PayPalExpressCheckoutPayment_Handler", "url_segment"), true)."/confirm/";
     }
 
     public static function cancel_link()
     {
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: Config::inst()->get("
+  * NEW: Config::inst()->get(" ...  (COMPLEX)
+  * EXP: Check if you should be using Name::class here instead of hard-coded class.
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
         return Director::absoluteURL(Config::inst()->get("PayPalExpressCheckoutPayment_Handler", "url_segment"), true)."/cancel/";
     }
 }

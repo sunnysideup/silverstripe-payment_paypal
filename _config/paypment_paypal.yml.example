@@ -1,6 +1,6 @@
 ---
 Name: payment_paypal
-Before: 'mysite/*'
+Before: 'app/*'
 After: 'framework/*','cms/*'
 ---
 PayPalExpressCheckoutPayment:
@@ -10,7 +10,7 @@ PayPalExpressCheckoutPayment:
   API_Signature: "XXXXX IMPORTANT XXXXXX"
   custom_settings:
     # max size = 750px wide by 90px high, and good to be on secure server
-    HDRIMG: "http://www.mysite.com/images/logo.jpg"
+    HDRIMG: "http://www.app.com/images/logo.jpg"
     # header border
     HDRBORDERCOLOR: 'CCCCCC'
     # header background
@@ -46,7 +46,7 @@ PayPalExpressCheckoutPayment:
   sBNCode: ""
     custom_settings:
     # max size = 750px wide by 90px high, and good to be on secure server
-    HDRIMG: "http://www.mysite.com/images/logo.jpg"
+    HDRIMG: "http://www.app.com/images/logo.jpg"
     # header border
     HDRBORDERCOLOR: 'CCCCCC'
     # header background

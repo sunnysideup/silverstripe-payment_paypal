@@ -2,6 +2,6 @@
 Name: paypalroutes
 After: framework/routes#coreroutes
 ---
-Director:
+SilverStripe\Control\Director:
   rules:
     'paypalexpresscheckoutpayment_handler//$Action/$ID/$OtherID/$Version' : 'PayPalExpressCheckoutPayment_Handler'

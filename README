@@ -38,7 +38,7 @@ Installation Instructions
 
 1. Find out how to add modules to SS and add module as per usual.
 
-2. Review configs and add entries to mysite/_config/config.yml
+2. Review configs and add entries to app/_config/config.yml
 (or similar) as necessary.
 In the _config/ folder of this module
 you can usually find some examples of config options (if any).
@@ -59,7 +59,7 @@ How to set up your paypal account:
  - Click 'API Access' link (listed under Account Information)
  - Click option 2 : 'Request API credentials'
  - Choose 'Request API signature', and click 'Agree and Submit'
- - Enter these details into your mysite/_config.php file with either the set_config_details or set_test_config_details functions
+ - Enter these details into your app/_config.php file with either the set_config_details or set_test_config_details functions
 
 
 Notes / Troubleshooting:

@@ -36,7 +36,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         'Debug' => 'HTMLText'
     );
     private static $logo = "ecommerce/images/paymentmethods/paypal.jpg";
-    private static $payment_methods = array();
+    private static $payment_methods = [];
 
     //PayPal URLs
     private static $test_API_Endpoint = "https://api-3t.sandbox.paypal.com/nvp";
@@ -85,7 +85,16 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
             new LiteralField('PayPalInfo', $privacyLink),
             new LiteralField(
                 'PayPalPaymentsList',
-                $this->renderWith("PaymentMethods")
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: ->RenderWith( (ignore case)
+  * NEW: ->RenderWith( ...  (COMPLEX)
+  * EXP: Check that the template location is still valid!
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+                $this->RenderWith("PaymentMethods")
             )
         );
     }
@@ -123,7 +132,15 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     public function PayPalForm()
     {
         user_error("This form is no longer used.");
-        Requirements::javascript(THIRDPARTY_DIR . '/jquery/jquery.js');
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: THIRDPARTY_DIR . '/jquery/jquery.js'
+  * EXP: Check for best usage and inclusion of Jquery
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+        Requirements::javascript('silverstripe/admin: thirdparty/jquery/jquery.js');
 
         // 1) Main Information
         $fields = '';
@@ -310,6 +327,15 @@ HTML;
         //set design settings
         $data = array_merge($this->Config()->get("custom_settings"), $data);
         $response = $this->apiCall('SetExpressCheckout', $data);
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: Config::inst()->get("
+  * NEW: Config::inst()->get(" ...  (COMPLEX)
+  * EXP: Check if you should be using Name::class here instead of hard-coded class.
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
         if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
             $this->addDebugInfo("RESPONSE: ".print_r($response, 1));
             $debugmessage = "PayPal Debug:" .
@@ -452,6 +478,15 @@ HTML;
             'SIGNATURE' => $this->Config()->get("API_Signature"),
             'BUTTONSOURCE' => $this->Config()->get("sBNCode")
         );
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: Config::inst()->get("
+  * NEW: Config::inst()->get(" ...  (COMPLEX)
+  * EXP: Check if you should be using Name::class here instead of hard-coded class.
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
         if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
             $this->addDebugInfo("STANDARD POSTING FIELDS ....  //// : ".print_r($postfields, 1));
             $this->addDebugInfo("ADDITIONAL POSTING FIELDS ....  //// : ".print_r($data, 1));
@@ -463,6 +498,15 @@ HTML;
         $rs->httpHeader('Accept: application/xml');
         $rs->httpHeader('Content-Type: application/x-www-form-urlencoded');
         $response = $rs->request('', 'POST', http_build_query($postfields));
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * WHY: automated upgrade
+  * OLD: Config::inst()->get("
+  * NEW: Config::inst()->get(" ...  (COMPLEX)
+  * EXP: Check if you should be using Name::class here instead of hard-coded class.
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
         if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
             $this->addDebugInfo('RESPONSE ....  //// : '.print_r($response, 1));
         }
@@ -472,7 +516,7 @@ HTML;
     protected function deformatNVP($nvpstr)
     {
         $intial = 0;
-        $nvpArray = array();
+        $nvpArray = [];
         while (strlen($nvpstr)) {
             //postion of Key
             $keypos= strpos($nvpstr, '=');
