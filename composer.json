@@ -1,6 +1,6 @@
 {
     "name": "sunnysideup/payment_paypal",
-    "type": "silverstripe-module",
+    "type": "silverstripe-vendormodule",
     "description": "add paypal to your payment options for the silverstripe payment and ecommerce modules",
     "keywords": [
         "Silverstripe-CMS",
