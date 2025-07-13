@@ -2,18 +2,29 @@
 
 namespace Sunnysideup\PaymentPayPal;
 
-use EcommercePayment;
-use LiteralField;
-use FieldList;
-use Controller;
+
+
+
+
 use EcommercePayment_Processing;
 use EcommercePayment_Failure;
-use Requirements;
-use Director;
-use Convert;
-use SiteConfig;
-use Config;
+
+
+
+
+
 use RestfulService;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Control\Controller;
+use SilverStripe\View\Requirements;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\Convert;
+use SilverStripe\SiteConfig\SiteConfig;
+use SilverStripe\Core\Config\Config;
+use Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment;
+use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
+
 
 
 /**
@@ -352,7 +363,7 @@ HTML;
   * EXP: Check if you should be using Name::class here instead of hard-coded class.
   * ### @@@@ STOP REPLACEMENT @@@@ ###
   */
-        if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
+        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
             $this->addDebugInfo("RESPONSE: ".print_r($response, 1));
             $debugmessage = "PayPal Debug:" .
                 "\nMode: $mode".
@@ -503,7 +514,7 @@ HTML;
   * EXP: Check if you should be using Name::class here instead of hard-coded class.
   * ### @@@@ STOP REPLACEMENT @@@@ ###
   */
-        if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
+        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
             $this->addDebugInfo("STANDARD POSTING FIELDS ....  //// : ".print_r($postfields, 1));
             $this->addDebugInfo("ADDITIONAL POSTING FIELDS ....  //// : ".print_r($data, 1));
             $this->addDebugInfo("SENDING TO ....  //// : ".print_r($this->getApiEndpoint(), 1));
@@ -523,7 +534,7 @@ HTML;
   * EXP: Check if you should be using Name::class here instead of hard-coded class.
   * ### @@@@ STOP REPLACEMENT @@@@ ###
   */
-        if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
+        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
             $this->addDebugInfo('RESPONSE ....  //// : '.print_r($response, 1));
         }
         return $this->deformatNVP($response->getBody());

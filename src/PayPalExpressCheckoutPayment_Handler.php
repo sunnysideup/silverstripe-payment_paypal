@@ -2,9 +2,14 @@
 
 namespace Sunnysideup\PaymentPayPal;
 
-use Controller;
-use Director;
-use Config;
+
+
+
+use SilverStripe\Control\Director;
+use SilverStripe\Control\Controller;
+use SilverStripe\Core\Config\Config;
+use Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment_Handler;
+
 
 
 /**
@@ -101,7 +106,7 @@ class PayPalExpressCheckoutPayment_Handler extends Controller
   * EXP: Check if you should be using Name::class here instead of hard-coded class.
   * ### @@@@ STOP REPLACEMENT @@@@ ###
   */
-        return Director::absoluteURL(Config::inst()->get("PayPalExpressCheckoutPayment_Handler", "url_segment"), true)."/confirm/";
+        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPayment_Handler::class, "url_segment"), true)."/confirm/";
     }
 
     public static function cancel_link()
@@ -115,7 +120,7 @@ class PayPalExpressCheckoutPayment_Handler extends Controller
   * EXP: Check if you should be using Name::class here instead of hard-coded class.
   * ### @@@@ STOP REPLACEMENT @@@@ ###
   */
-        return Director::absoluteURL(Config::inst()->get("PayPalExpressCheckoutPayment_Handler", "url_segment"), true)."/cancel/";
+        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPayment_Handler::class, "url_segment"), true)."/cancel/";
     }
 }
 

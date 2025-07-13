@@ -1,0 +1,142 @@
+2025-07-14 04:18
+
+# running php upgrade upgrade see: https://github.com/silverstripe/silverstripe-upgrader
+cd /var/www/upgrades/upgradeto4
+php /var/www/ss3/upgrader/vendor/silverstripe/upgrader/bin/upgrade-code upgrade /var/www/upgrades/upgradeto4/payment_paypal  --root-dir=/var/www/upgrades/upgradeto4 --write -vvv
+Writing changes for 4 files
+Running upgrades on "/var/www/upgrades/upgradeto4/payment_paypal"
+[2025-07-14 04:18:03] Applying RenameClasses to PaymentPaypalTest.php...
+[2025-07-14 04:18:03] Applying ClassToTraitRule to PaymentPaypalTest.php...
+[2025-07-14 04:18:03] Applying UpdateConfigClasses to routes.yml...
+[2025-07-14 04:18:03] Applying RenameClasses to PayPalExpressCheckoutPayment_Handler.php...
+[2025-07-14 04:18:03] Applying ClassToTraitRule to PayPalExpressCheckoutPayment_Handler.php...
+[2025-07-14 04:18:03] Applying RenameClasses to PayPalExpressCheckoutPayment.php...
+[2025-07-14 04:18:03] Applying ClassToTraitRule to PayPalExpressCheckoutPayment.php...
+[2025-07-14 04:18:03] Applying RenameClasses to _config.php...
+[2025-07-14 04:18:03] Applying ClassToTraitRule to _config.php...
+modified:	tests/PaymentPaypalTest.php
+@@ -1,4 +1,6 @@
+ <?php
++
++use SilverStripe\Dev\SapphireTest;
+
+ class PaymentPaypalTest extends SapphireTest
+ {
+
+modified:	_config/routes.yml
+@@ -4,5 +4,5 @@
+ ---
+ SilverStripe\Control\Director:
+   rules:
+-    'paypalexpresscheckoutpayment_handler//$Action/$ID/$OtherID/$Version' : 'PayPalExpressCheckoutPayment_Handler'
++    paypalexpresscheckoutpayment_handler//$Action/$ID/$OtherID/$Version: Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment_Handler
+
+
+modified:	src/PayPalExpressCheckoutPayment_Handler.php
+@@ -2,9 +2,14 @@
+
+ namespace Sunnysideup\PaymentPayPal;
+
+-use Controller;
+-use Director;
+-use Config;
++
++
++
++use SilverStripe\Control\Director;
++use SilverStripe\Control\Controller;
++use SilverStripe\Core\Config\Config;
++use Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment_Handler;
++
+
+
+ /**
+@@ -101,7 +106,7 @@
+   * EXP: Check if you should be using Name::class here instead of hard-coded class.
+   * ### @@@@ STOP REPLACEMENT @@@@ ###
+   */
+-        return Director::absoluteURL(Config::inst()->get("PayPalExpressCheckoutPayment_Handler", "url_segment"), true)."/confirm/";
++        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPayment_Handler::class, "url_segment"), true)."/confirm/";
+     }
+
+     public static function cancel_link()
+@@ -115,7 +120,7 @@
+   * EXP: Check if you should be using Name::class here instead of hard-coded class.
+   * ### @@@@ STOP REPLACEMENT @@@@ ###
+   */
+-        return Director::absoluteURL(Config::inst()->get("PayPalExpressCheckoutPayment_Handler", "url_segment"), true)."/cancel/";
++        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPayment_Handler::class, "url_segment"), true)."/cancel/";
+     }
+ }
+
+
+modified:	src/PayPalExpressCheckoutPayment.php
+@@ -2,18 +2,29 @@
+
+ namespace Sunnysideup\PaymentPayPal;
+
+-use EcommercePayment;
+-use LiteralField;
+-use FieldList;
+-use Controller;
++
++
++
++
+ use EcommercePayment_Processing;
+ use EcommercePayment_Failure;
+-use Requirements;
+-use Director;
+-use Convert;
+-use SiteConfig;
+-use Config;
++
++
++
++
++
+ use RestfulService;
++use SilverStripe\Forms\LiteralField;
++use SilverStripe\Forms\FieldList;
++use SilverStripe\Control\Controller;
++use SilverStripe\View\Requirements;
++use SilverStripe\Control\Director;
++use SilverStripe\Core\Convert;
++use SilverStripe\SiteConfig\SiteConfig;
++use SilverStripe\Core\Config\Config;
++use Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment;
++use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
++
+
+
+ /**
+@@ -352,7 +363,7 @@
+   * EXP: Check if you should be using Name::class here instead of hard-coded class.
+   * ### @@@@ STOP REPLACEMENT @@@@ ###
+   */
+-        if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
++        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
+             $this->addDebugInfo("RESPONSE: ".print_r($response, 1));
+             $debugmessage = "PayPal Debug:" .
+                 "\nMode: $mode".
+@@ -503,7 +514,7 @@
+   * EXP: Check if you should be using Name::class here instead of hard-coded class.
+   * ### @@@@ STOP REPLACEMENT @@@@ ###
+   */
+-        if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
++        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
+             $this->addDebugInfo("STANDARD POSTING FIELDS ....  //// : ".print_r($postfields, 1));
+             $this->addDebugInfo("ADDITIONAL POSTING FIELDS ....  //// : ".print_r($data, 1));
+             $this->addDebugInfo("SENDING TO ....  //// : ".print_r($this->getApiEndpoint(), 1));
+@@ -523,7 +534,7 @@
+   * EXP: Check if you should be using Name::class here instead of hard-coded class.
+   * ### @@@@ STOP REPLACEMENT @@@@ ###
+   */
+-        if (Config::inst()->get("PayPalExpressCheckoutPayment", "debug")) {
++        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
+             $this->addDebugInfo('RESPONSE ....  //// : '.print_r($response, 1));
+         }
+         return $this->deformatNVP($response->getBody());
+
+Writing changes for 4 files
+✔✔✔
