@@ -1,19 +1,8 @@
 <?php
 
-namespace Sunnysideup\PaymentPayPal;
+namespace Sunnysideup\PaymentPaypal;
 
-
-
-
-
-use EcommercePayment_Processing;
-use EcommercePayment_Failure;
-
-
-
-
-
-use RestfulService;
+use GuzzleHttp\Client;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Control\Controller;
@@ -22,10 +11,10 @@ use SilverStripe\Control\Director;
 use SilverStripe\Core\Convert;
 use SilverStripe\SiteConfig\SiteConfig;
 use SilverStripe\Core\Config\Config;
-use Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
-
-
+use Sunnysideup\Ecommerce\Model\Order;
+use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentFailure;
+use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentProcessing;
 
 /**
  * PayPal Express Checkout Payment
@@ -45,14 +34,15 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 {
     private static $debug = false;
 
+    private static $continue_button_text = 'Continue to PayPal';
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * OLD: private static $db
-  * EXP: Check that is class indeed extends DataObject and that it is not a data-extension!
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
-    
+    /**
+     * ### @@@@ START REPLACEMENT @@@@ ###
+     * OLD: private static $db
+     * EXP: Check that is class indeed extends DataObject and that it is not a data-extension!
+     * ### @@@@ STOP REPLACEMENT @@@@ ###
+     */
+
     private static $table_name = 'PayPalExpressCheckoutPayment';
 
     private static $db = array(
@@ -88,7 +78,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         //'HDRBACKCOLOR' => '00FFFF', //header background
         //'PAYFLOWCOLOR'=> 'AAAAAA' //payflow colour
         //'PAGESTYLE' => //page style set in merchant account settings
-        'SOLUTIONTYPE' => 'Sole'//require paypal account, or not. Can be or 'Mark' (required) or 'Sole' (not required)
+        'SOLUTIONTYPE' => 'Sole' //require paypal account, or not. Can be or 'Mark' (required) or 'Sole' (not required)
         //'BRANDNAME'  => 'my site name'//override business name in checkout
         //'CUSTOMERSERVICENUMBER' => '0800 1234 5689'//number to call to resolve payment issues
         //'NOSHIPPING' => 1 //disable showing shipping details
@@ -97,14 +87,14 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     public function getCMSFields()
     {
         $fields = parent::getCMSFields();
-        foreach (array_keys(self::$db) as $field) {
+        foreach (array_keys($this->config()->get('db')) as $field) {
             $fields->removeFieldFromTab('Root.Main', $field);
-            $fields->addFieldToTab('Root.Advanced', LiteralField::create($field.'_debug', '<h2>'.$field.'</h2><pre>'.$this->$field.'</pre>'));
+            $fields->addFieldToTab('Root.Advanced', LiteralField::create($field . '_debug', '<h2>' . $field . '</h2><pre>' . $this->$field . '</pre>'));
         }
         return $fields;
     }
 
-    public function getPaymentFormFields($amount = 0, $order = NULL)
+    public function getPaymentFormFields($amount = 0, ?Order $order = null): FieldList
     {
         $logo = '<img src="' . $this->Config()->get("logo") . '" alt="Credit card payments powered by PayPal"/>';
         $privacyLink = '<a href="' . $this->Config()->get("privacy_link") . '" target="_blank" title="Read PayPal\'s privacy policy">' . $logo . '</a><br/>';
@@ -113,22 +103,22 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
             new LiteralField(
                 'PayPalPaymentsList',
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: ->RenderWith( (ignore case)
-  * NEW: ->RenderWith( ...  (COMPLEX)
-  * EXP: Check that the template location is still valid!
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
+                /**
+                 * ### @@@@ START REPLACEMENT @@@@ ###
+                 * WHY: automated upgrade
+                 * OLD: ->RenderWith( (ignore case)
+                 * NEW: ->RenderWith( ...  (COMPLEX)
+                 * EXP: Check that the template location is still valid!
+                 * ### @@@@ STOP REPLACEMENT @@@@ ###
+                 */
                 $this->RenderWith("PaymentMethods")
             )
         );
     }
 
-    public function getPaymentFormRequirements()
+    public function getPaymentFormRequirements(): array
     {
-        return null;
+        return [];
     }
 
     //main processing function
@@ -144,29 +134,28 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         $this->write();
         if ($paymenturl) {
             Controller::curr()->redirect($paymenturl); //redirect to payment gateway
-            return EcommercePayment_Processing::create();
+            return EcommercePaymentProcessing::create();
         }
         $this->Message = _t('PayPalExpressCheckoutPayment.COULDNOTBECONTACTED', "PayPal could not be contacted");
         $this->Status = 'Failure';
         $this->write();
-        return EcommercePayment_Failure::create($this->Message);
+        return EcommercePaymentFailure::create($this->Message);
     }
 
     /**
-     *
-     * depracated
+     * @deprecated
      */
     public function PayPalForm()
     {
         user_error("This form is no longer used.");
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: THIRDPARTY_DIR . '/jquery/jquery.js'
-  * EXP: Check for best usage and inclusion of Jquery
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
+        /**
+         * ### @@@@ START REPLACEMENT @@@@ ###
+         * WHY: automated upgrade
+         * OLD: THIRDPARTY_DIR . '/jquery/jquery.js'
+         * EXP: Check for best usage and inclusion of Jquery
+         * ### @@@@ STOP REPLACEMENT @@@@ ###
+         */
         Requirements::javascript('sunnysideup/payment_paypal: silverstripe/admin: thirdparty/jquery/jquery.js');
 
         // 1) Main Information
@@ -200,14 +189,14 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
         // 5) Redirection Informations
 
-        $inputs['cancel_return'] = Director::absoluteBaseURL() . PayPalExpressCheckoutPayment_Handler::cancel_link($inputs['custom']);
-        $inputs['return'] = Director::absoluteBaseURL() . PayPalExpressCheckoutPayment_Handler::complete_link();
+        $inputs['cancel_return'] = Director::absoluteBaseURL() . PayPalExpressCheckoutPaymentHandler::cancel_link($inputs['custom']);
+        $inputs['return'] = Director::absoluteBaseURL() . PayPalExpressCheckoutPaymentHandler::complete_link();
         $inputs['rm'] = '2';
         // Add Here The Notify URL
 
         // 6) PayPal Pages Style Optional Informations
 
-        if (self:: $continue_button_text) {
+        if ($this->Config()->get("continue_button_text")) {
             $inputs['cbt'] = $this->Config()->get("continue_button_text");
         }
 
@@ -303,8 +292,8 @@ HTML;
             //'PAYMENTREQUEST_0_PAYMENTACTION' => , //Sale, Order, or Authorization
             //'PAYMENTREQUEST_0_PAYMENTREQUESTID'
             //return urls
-            'RETURNURL' => PayPalExpressCheckoutPayment_Handler::return_link(),
-            'CANCELURL' => PayPalExpressCheckoutPayment_Handler::cancel_link(),
+            'RETURNURL' => PayPalExpressCheckoutPaymentHandler::return_link(),
+            'CANCELURL' => PayPalExpressCheckoutPaymentHandler::cancel_link(),
             //'PAYMENTREQUEST_0_NOTIFYURL' => //Instant payment notification
             //'CALLBACK'
             //'CALLBACKTIMEOUT'
@@ -331,20 +320,22 @@ HTML;
             }
             $extradata['Name'] = implode(' ', $arr);
         }
-        $extradata["OrderID"] = SiteConfig::current_site_config()->Title." ".$this->Order()->getTitle();
+        $extradata["OrderID"] = SiteConfig::current_site_config()->Title . " " . $this->Order()->getTitle();
         //add member & shipping fields, etc ...this will pre-populate the paypal login / create account form
-        foreach (array(
-            'Email' => 'EMAIL',
-            'Name' => 'PAYMENTREQUEST_0_SHIPTONAME',
-            'Address' => 'PAYMENTREQUEST_0_SHIPTOSTREET',
-            'Address2' => 'PAYMENTREQUEST_0_SHIPTOSTREET2',
-            'City' => 'PAYMENTREQUEST_0_SHIPTOCITY',
-            'PostalCode' => 'PAYMENTREQUEST_0_SHIPTOZIP',
-            'Region' => 'PAYMENTREQUEST_0_SHIPTOPHONENUM',
-            'Phone' => 'PAYMENTREQUEST_0_SHIPTOPHONENUM',
-            'Country' => 'PAYMENTREQUEST_0_SHIPTOCOUNTRYCODE',
-            'OrderID' => 'PAYMENTREQUEST_0_DESC'
-        ) as $field => $val) {
+        foreach (
+            array(
+                'Email' => 'EMAIL',
+                'Name' => 'PAYMENTREQUEST_0_SHIPTONAME',
+                'Address' => 'PAYMENTREQUEST_0_SHIPTOSTREET',
+                'Address2' => 'PAYMENTREQUEST_0_SHIPTOSTREET2',
+                'City' => 'PAYMENTREQUEST_0_SHIPTOCITY',
+                'PostalCode' => 'PAYMENTREQUEST_0_SHIPTOZIP',
+                'Region' => 'PAYMENTREQUEST_0_SHIPTOPHONENUM',
+                'Phone' => 'PAYMENTREQUEST_0_SHIPTOPHONENUM',
+                'Country' => 'PAYMENTREQUEST_0_SHIPTOCOUNTRYCODE',
+                'OrderID' => 'PAYMENTREQUEST_0_DESC'
+            ) as $field => $val
+        ) {
             if (isset($extradata[$field])) {
                 $data[$val] = $extradata[$field];
             } elseif ($this->$field) {
@@ -355,29 +346,29 @@ HTML;
         $data = array_merge($this->Config()->get("custom_settings"), $data);
         $response = $this->apiCall('SetExpressCheckout', $data);
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: Config::inst()->get("
-  * NEW: Config::inst()->get(" ...  (COMPLEX)
-  * EXP: Check if you should be using Name::class here instead of hard-coded class.
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
+        /**
+         * ### @@@@ START REPLACEMENT @@@@ ###
+         * WHY: automated upgrade
+         * OLD: Config::inst()->get("
+         * NEW: Config::inst()->get(" ...  (COMPLEX)
+         * EXP: Check if you should be using Name::class here instead of hard-coded class.
+         * ### @@@@ STOP REPLACEMENT @@@@ ###
+         */
+        $mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
-            $this->addDebugInfo("RESPONSE: ".print_r($response, 1));
+            $this->addDebugInfo("RESPONSE: " . print_r($response, 1));
             $debugmessage = "PayPal Debug:" .
-                "\nMode: $mode".
-                "\nAPI url: ".$this->getApiEndpoint().
-                "\nRedirect url: ".$this->getPayPalURL($response['TOKEN']).
-                "\nUsername: " .$this->Config()->get("API_UserName").
-                "\nPassword: " .$this->Config()->get("API_Password").
-                "\nSignature: ".$this->Config()->get("API_Signature").
-                "\nRequest Data: ".print_r($data, true).
-                "\nResponse: ".print_r($response, true);
-            $this->addDebugInfo("DEBUG MESSAGE: ".$debugmessage);
+                "\nMode: $mode" .
+                "\nAPI url: " . $this->getApiEndpoint() .
+                "\nRedirect url: " . $this->getPayPalURL($response['TOKEN']) .
+                "\nUsername: " . $this->Config()->get("API_UserName") .
+                "\nPassword: " . $this->Config()->get("API_Password") .
+                "\nSignature: " . $this->Config()->get("API_Signature") .
+                "\nRequest Data: " . print_r($data, true) .
+                "\nResponse: " . print_r($response, true);
+            $this->addDebugInfo("DEBUG MESSAGE: " . $debugmessage);
         }
         if (!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")) {
-            $mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
             return null;
         }
         //get and save token for later
@@ -447,7 +438,7 @@ HTML;
                 case "CANCEL-REVERSAL": // A reversal has been canceled; for example, when you win a dispute and the funds for the reversal have been returned to you.
                     break;
                 case "IN-PROGRESS":
-                    $this->Message = _t('PayPalExpressCheckoutPayment.INPROGRESS', "The transaction has not terminated");//, e.g. an authorization may be awaiting completion.";
+                    $this->Message = _t('PayPalExpressCheckoutPayment.INPROGRESS', "The transaction has not terminated"); //, e.g. an authorization may be awaiting completion.";
                     break;
                 case "PARTIALLY-REFUNDED":
                     $this->Message = _t('PayPalExpressCheckoutPayment.PARTIALLYREFUNDED', "The payment has been partially refunded.");
@@ -455,7 +446,7 @@ HTML;
                 case "PENDING":
                     $this->Message = _t('PayPalExpressCheckoutPayment.PENDING', "The payment is pending.");
                     if (isset($response["PAYMENTINFO_0_PENDINGREASON"])) {
-                        $this->Message .= " ".$this->getPendingReason($response["PAYMENTINFO_0_PENDINGREASON"]);
+                        $this->Message .= " " . $this->getPendingReason($response["PAYMENTINFO_0_PENDINGREASON"]);
                     }
                     break;
                 case "REFUNDED":
@@ -501,41 +492,58 @@ HTML;
             'METHOD' => $method,
             'VERSION' => $this->Config()->get("version"),
             'USER' => $this->Config()->get("API_UserName"),
-            'PWD'=> $this->Config()->get("API_Password"),
+            'PWD' => $this->Config()->get("API_Password"),
             'SIGNATURE' => $this->Config()->get("API_Signature"),
             'BUTTONSOURCE' => $this->Config()->get("sBNCode")
         );
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: Config::inst()->get("
-  * NEW: Config::inst()->get(" ...  (COMPLEX)
-  * EXP: Check if you should be using Name::class here instead of hard-coded class.
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
+        /**
+         * ### @@@@ START REPLACEMENT @@@@ ###
+         * WHY: automated upgrade
+         * OLD: Config::inst()->get("
+         * NEW: Config::inst()->get(" ...  (COMPLEX)
+         * EXP: Check if you should be using Name::class here instead of hard-coded class.
+         * ### @@@@ STOP REPLACEMENT @@@@ ###
+         */
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
-            $this->addDebugInfo("STANDARD POSTING FIELDS ....  //// : ".print_r($postfields, 1));
-            $this->addDebugInfo("ADDITIONAL POSTING FIELDS ....  //// : ".print_r($data, 1));
-            $this->addDebugInfo("SENDING TO ....  //// : ".print_r($this->getApiEndpoint(), 1));
+            $this->addDebugInfo("STANDARD POSTING FIELDS ....  //// : " . print_r($postfields, 1));
+            $this->addDebugInfo("ADDITIONAL POSTING FIELDS ....  //// : " . print_r($data, 1));
+            $this->addDebugInfo("SENDING TO ....  //// : " . print_r($this->getApiEndpoint(), 1));
         }
         $postfields = array_merge($postfields, $data);
         //Make POST request to Paypal via RESTful service
-        $rs = new RestfulService($this->getApiEndpoint(), 0); //REST connection that will expire immediately
-        $rs->httpHeader('Accept: application/xml');
-        $rs->httpHeader('Content-Type: application/x-www-form-urlencoded');
-        $response = $rs->request('', 'POST', http_build_query($postfields));
+        $client = new Client([
+            'base_uri' => $this->getApiEndpoint(),
+            'headers' => [
+                'Accept' => 'application/xml',
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ],
+            'timeout' => 10, // optional
+        ]);
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: Config::inst()->get("
-  * NEW: Config::inst()->get(" ...  (COMPLEX)
-  * EXP: Check if you should be using Name::class here instead of hard-coded class.
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
+        $response = $client->post('', [
+            'form_params' => $postfields,
+        ]);
+
+        // status and body:
+        $status = $response->getStatusCode();
+        $body = (string)$response->getBody();
+
+        return [
+            'status' => $status,
+            'body' => $body,
+        ];
+
+        /**
+         * ### @@@@ START REPLACEMENT @@@@ ###
+         * WHY: automated upgrade
+         * OLD: Config::inst()->get("
+         * NEW: Config::inst()->get(" ...  (COMPLEX)
+         * EXP: Check if you should be using Name::class here instead of hard-coded class.
+         * ### @@@@ STOP REPLACEMENT @@@@ ###
+         */
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
-            $this->addDebugInfo('RESPONSE ....  //// : '.print_r($response, 1));
+            $this->addDebugInfo('RESPONSE ....  //// : ' . print_r($response, 1));
         }
         return $this->deformatNVP($response->getBody());
     }
@@ -546,15 +554,15 @@ HTML;
         $nvpArray = [];
         while (strlen($nvpstr)) {
             //postion of Key
-            $keypos= strpos($nvpstr, '=');
+            $keypos = strpos($nvpstr, '=');
             //position of value
-            $valuepos = strpos($nvpstr, '&') ? strpos($nvpstr, '&'): strlen($nvpstr);
+            $valuepos = strpos($nvpstr, '&') ? strpos($nvpstr, '&') : strlen($nvpstr);
             /*getting the Key and Value values and storing in a Associative Array*/
-            $keyval=substr($nvpstr, $intial, $keypos);
-            $valval=substr($nvpstr, $keypos+1, $valuepos-$keypos-1);
+            $keyval = substr($nvpstr, $intial, $keypos);
+            $valval = substr($nvpstr, $keypos + 1, $valuepos - $keypos - 1);
             //decoding the respose
-            $nvpArray[urldecode($keyval)] =urldecode($valval);
-            $nvpstr=substr($nvpstr, $valuepos+1, strlen($nvpstr));
+            $nvpArray[urldecode($keyval)] = urldecode($valval);
+            $nvpstr = substr($nvpstr, $valuepos + 1, strlen($nvpstr));
         }
         return $nvpArray;
     }
@@ -567,14 +575,13 @@ HTML;
     protected function getPayPalURL($token)
     {
         $url = ($this->Config()->get("test_mode") === true) ? $this->Config()->get("test_PAYPAL_URL") : $this->Config()->get("PAYPAL_URL");
-        return $url.$token.'&useraction=commit'; //useraction=commit ensures the payment is confirmed on PayPal, and not on a merchant confirm page.
+        return $url . $token . '&useraction=commit'; //useraction=commit ensures the payment is confirmed on PayPal, and not on a merchant confirm page.
     }
 
 
     protected function addDebugInfo($msg)
     {
-        $this->Debug .= "---------//------------\n\n".$msg;
+        $this->Debug .= "---------//------------\n\n" . $msg;
         $this->write();
     }
 }
-

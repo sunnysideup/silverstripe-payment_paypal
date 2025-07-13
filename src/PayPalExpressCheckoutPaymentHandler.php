@@ -1,6 +1,6 @@
 <?php
 
-namespace Sunnysideup\PaymentPayPal;
+namespace Sunnysideup\PaymentPaypal;
 
 
 
@@ -8,16 +8,15 @@ namespace Sunnysideup\PaymentPayPal;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
-use Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment_Handler;
 
 
 
 /**
  * Handler for responses from the PayPal site
  */
-class PayPalExpressCheckoutPayment_Handler extends Controller
+class PayPalExpressCheckoutPaymentHandler extends Controller
 {
-    private static $url_segment = 'paypalexpresscheckoutpayment_handler';
+    private static $url_segment = 'paypalexpresscheckoutpaymenthandler';
 
     protected $payment = null; //only need to get this once
 
@@ -98,29 +97,41 @@ class PayPalExpressCheckoutPayment_Handler extends Controller
     public static function return_link()
     {
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: Config::inst()->get("
-  * NEW: Config::inst()->get(" ...  (COMPLEX)
-  * EXP: Check if you should be using Name::class here instead of hard-coded class.
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
-        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPayment_Handler::class, "url_segment"), true)."/confirm/";
+        /**
+         * ### @@@@ START REPLACEMENT @@@@ ###
+         * WHY: automated upgrade
+         * OLD: Config::inst()->get("
+         * NEW: Config::inst()->get(" ...  (COMPLEX)
+         * EXP: Check if you should be using Name::class here instead of hard-coded class.
+         * ### @@@@ STOP REPLACEMENT @@@@ ###
+         */
+        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, "url_segment"), true) . "/confirm/";
     }
 
     public static function cancel_link()
     {
 
-/**
-  * ### @@@@ START REPLACEMENT @@@@ ###
-  * WHY: automated upgrade
-  * OLD: Config::inst()->get("
-  * NEW: Config::inst()->get(" ...  (COMPLEX)
-  * EXP: Check if you should be using Name::class here instead of hard-coded class.
-  * ### @@@@ STOP REPLACEMENT @@@@ ###
-  */
-        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPayment_Handler::class, "url_segment"), true)."/cancel/";
+        /**
+         * ### @@@@ START REPLACEMENT @@@@ ###
+         * WHY: automated upgrade
+         * OLD: Config::inst()->get("
+         * NEW: Config::inst()->get(" ...  (COMPLEX)
+         * EXP: Check if you should be using Name::class here instead of hard-coded class.
+         * ### @@@@ STOP REPLACEMENT @@@@ ###
+         */
+        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, "url_segment"), true) . "/cancel/";
+    }
+    public static function complete_link()
+    {
+
+        /**
+         * ### @@@@ START REPLACEMENT @@@@ ###
+         * WHY: automated upgrade
+         * OLD: Config::inst()->get("
+         * NEW: Config::inst()->get(" ...  (COMPLEX)
+         * EXP: Check if you should be using Name::class here instead of hard-coded class.
+         * ### @@@@ STOP REPLACEMENT @@@@ ###
+         */
+        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, "url_segment"), true) . "/confirm/";
     }
 }
-
