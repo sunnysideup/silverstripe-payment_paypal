@@ -1,5 +1,12 @@
 <?php
 
+namespace Sunnysideup\PaymentPayPal;
+
+use Controller;
+use Director;
+use Config;
+
+
 /**
  * Handler for responses from the PayPal site
  */

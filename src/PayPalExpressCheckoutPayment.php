@@ -1,5 +1,21 @@
 <?php
 
+namespace Sunnysideup\PaymentPayPal;
+
+use EcommercePayment;
+use LiteralField;
+use FieldList;
+use Controller;
+use EcommercePayment_Processing;
+use EcommercePayment_Failure;
+use Requirements;
+use Director;
+use Convert;
+use SiteConfig;
+use Config;
+use RestfulService;
+
+
 /**
  * PayPal Express Checkout Payment
  * @author Jeremy Shipman jeremy [at] burnbright.net

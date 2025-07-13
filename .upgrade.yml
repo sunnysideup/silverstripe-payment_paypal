@@ -1,0 +1,3 @@
+mappings:
+  PayPalExpressCheckoutPayment_Handler: Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment_Handler
+  PayPalExpressCheckoutPayment: Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment
