@@ -1,4 +1,4 @@
 SilverStripe\ORM\DatabaseAdmin:
   classname_value_remapping:
-    PayPalExpressCheckoutPayment_Handler: Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment_Handler
+    PayPalExpressCheckoutPayment_Handler: Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPaymentHandler
     PayPalExpressCheckoutPayment: Sunnysideup\PaymentPayPal\PayPalExpressCheckoutPayment

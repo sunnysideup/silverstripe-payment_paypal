@@ -36,12 +36,6 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
     private static $continue_button_text = 'Continue to PayPal';
 
-    /**
-     * ### @@@@ START REPLACEMENT @@@@ ###
-     * OLD: private static $db
-     * EXP: Check that is class indeed extends DataObject and that it is not a data-extension!
-     * ### @@@@ STOP REPLACEMENT @@@@ ###
-     */
 
     private static $table_name = 'PayPalExpressCheckoutPayment';
 
@@ -103,14 +97,6 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
             new LiteralField(
                 'PayPalPaymentsList',
 
-                /**
-                 * ### @@@@ START REPLACEMENT @@@@ ###
-                 * WHY: automated upgrade
-                 * OLD: ->RenderWith( (ignore case)
-                 * NEW: ->RenderWith( ...  (COMPLEX)
-                 * EXP: Check that the template location is still valid!
-                 * ### @@@@ STOP REPLACEMENT @@@@ ###
-                 */
                 $this->RenderWith("PaymentMethods")
             )
         );
@@ -148,16 +134,6 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     public function PayPalForm()
     {
         user_error("This form is no longer used.");
-
-        /**
-         * ### @@@@ START REPLACEMENT @@@@ ###
-         * WHY: automated upgrade
-         * OLD: THIRDPARTY_DIR . '/jquery/jquery.js'
-         * EXP: Check for best usage and inclusion of Jquery
-         * ### @@@@ STOP REPLACEMENT @@@@ ###
-         */
-        Requirements::javascript('sunnysideup/payment_paypal: silverstripe/admin: thirdparty/jquery/jquery.js');
-
         // 1) Main Information
         $fields = '';
         $order = $this->Order();
@@ -346,14 +322,7 @@ HTML;
         $data = array_merge($this->Config()->get("custom_settings"), $data);
         $response = $this->apiCall('SetExpressCheckout', $data);
 
-        /**
-         * ### @@@@ START REPLACEMENT @@@@ ###
-         * WHY: automated upgrade
-         * OLD: Config::inst()->get("
-         * NEW: Config::inst()->get(" ...  (COMPLEX)
-         * EXP: Check if you should be using Name::class here instead of hard-coded class.
-         * ### @@@@ STOP REPLACEMENT @@@@ ###
-         */
+
         $mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
             $this->addDebugInfo("RESPONSE: " . print_r($response, 1));
@@ -497,14 +466,7 @@ HTML;
             'BUTTONSOURCE' => $this->Config()->get("sBNCode")
         );
 
-        /**
-         * ### @@@@ START REPLACEMENT @@@@ ###
-         * WHY: automated upgrade
-         * OLD: Config::inst()->get("
-         * NEW: Config::inst()->get(" ...  (COMPLEX)
-         * EXP: Check if you should be using Name::class here instead of hard-coded class.
-         * ### @@@@ STOP REPLACEMENT @@@@ ###
-         */
+
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
             $this->addDebugInfo("STANDARD POSTING FIELDS ....  //// : " . print_r($postfields, 1));
             $this->addDebugInfo("ADDITIONAL POSTING FIELDS ....  //// : " . print_r($data, 1));
@@ -534,14 +496,6 @@ HTML;
             'body' => $body,
         ];
 
-        /**
-         * ### @@@@ START REPLACEMENT @@@@ ###
-         * WHY: automated upgrade
-         * OLD: Config::inst()->get("
-         * NEW: Config::inst()->get(" ...  (COMPLEX)
-         * EXP: Check if you should be using Name::class here instead of hard-coded class.
-         * ### @@@@ STOP REPLACEMENT @@@@ ###
-         */
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
             $this->addDebugInfo('RESPONSE ....  //// : ' . print_r($response, 1));
         }

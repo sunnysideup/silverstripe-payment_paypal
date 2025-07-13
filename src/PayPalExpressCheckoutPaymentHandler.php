@@ -96,42 +96,25 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
 
     public static function return_link()
     {
-
-        /**
-         * ### @@@@ START REPLACEMENT @@@@ ###
-         * WHY: automated upgrade
-         * OLD: Config::inst()->get("
-         * NEW: Config::inst()->get(" ...  (COMPLEX)
-         * EXP: Check if you should be using Name::class here instead of hard-coded class.
-         * ### @@@@ STOP REPLACEMENT @@@@ ###
-         */
-        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, "url_segment"), true) . "/confirm/";
+        return self::make_link("confirm");
     }
 
     public static function cancel_link()
     {
-
-        /**
-         * ### @@@@ START REPLACEMENT @@@@ ###
-         * WHY: automated upgrade
-         * OLD: Config::inst()->get("
-         * NEW: Config::inst()->get(" ...  (COMPLEX)
-         * EXP: Check if you should be using Name::class here instead of hard-coded class.
-         * ### @@@@ STOP REPLACEMENT @@@@ ###
-         */
-        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, "url_segment"), true) . "/cancel/";
+        return self::make_link("cancel");
     }
     public static function complete_link()
     {
 
-        /**
-         * ### @@@@ START REPLACEMENT @@@@ ###
-         * WHY: automated upgrade
-         * OLD: Config::inst()->get("
-         * NEW: Config::inst()->get(" ...  (COMPLEX)
-         * EXP: Check if you should be using Name::class here instead of hard-coded class.
-         * ### @@@@ STOP REPLACEMENT @@@@ ###
-         */
-        return Director::absoluteURL(Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, "url_segment"), true) . "/confirm/";
+        return self::make_link("complete");
+    }
+
+    protected static function make_link($action)
+    {
+        Controller::join_links(
+            Director::baseURL(),
+            Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, "url_segment"),
+            $action
+        );
     }
 }
