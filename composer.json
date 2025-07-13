@@ -32,5 +32,10 @@
         "sunnysideup/ecommerce": "*",
         "silverstripe/recipe-cms": "*"
     },
-    "extra": []
+    "extra": [],
+    "autoload": {
+        "psr-4": {
+            "Sunnysideup\\PaymentPayPal\\": "src/"
+        }
+    }
 }
