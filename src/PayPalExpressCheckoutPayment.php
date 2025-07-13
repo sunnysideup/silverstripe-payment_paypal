@@ -140,7 +140,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
   * EXP: Check for best usage and inclusion of Jquery
   * ### @@@@ STOP REPLACEMENT @@@@ ###
   */
-        Requirements::javascript('silverstripe/admin: thirdparty/jquery/jquery.js');
+        Requirements::javascript('sunnysideup/payment_paypal: silverstripe/admin: thirdparty/jquery/jquery.js');
 
         // 1) Main Information
         $fields = '';
