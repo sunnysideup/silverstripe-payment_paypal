@@ -18,6 +18,16 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 {
     private static $debug = false;
 
+
+/**
+  * ### @@@@ START REPLACEMENT @@@@ ###
+  * OLD: private static $db
+  * EXP: Check that is class indeed extends DataObject and that it is not a data-extension!
+  * ### @@@@ STOP REPLACEMENT @@@@ ###
+  */
+    
+    private static $table_name = 'PayPalExpressCheckoutPayment';
+
     private static $db = array(
         'Token' => 'Varchar(30)',
         'PayerID' => 'Varchar(30)',
