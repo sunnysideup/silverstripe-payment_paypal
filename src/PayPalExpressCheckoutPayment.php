@@ -11,6 +11,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Core\Convert;
 use SilverStripe\SiteConfig\SiteConfig;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
 use Sunnysideup\Ecommerce\Model\Order;
 use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentFailure;
@@ -46,7 +47,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         'AuthorisationCode' => 'Text',
         'Debug' => 'HTMLText'
     );
-    private static $logo = "ecommerce/images/paymentmethods/paypal.jpg";
+    private static $logo = "sunnysideup/payment_paypal: client/dist/images/paypal.png";
     private static $payment_methods = [];
 
     //PayPal URLs
@@ -90,14 +91,16 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
     public function getPaymentFormFields($amount = 0, ?Order $order = null): FieldList
     {
-        $logo = '<img src="' . $this->Config()->get("logo") . '" alt="Credit card payments powered by PayPal"/>';
+        $logo = $this->config()->get('logo');
+        $src = ModuleResourceLoader::singleton()->resolveURL($logo);
+        $logo = '<img src="' . $src . '" alt="Credit card payments powered by PayPal"/>';
         $privacyLink = '<a href="' . $this->Config()->get("privacy_link") . '" target="_blank" title="Read PayPal\'s privacy policy">' . $logo . '</a><br/>';
         return new FieldList(
             new LiteralField('PayPalInfo', $privacyLink),
             new LiteralField(
                 'PayPalPaymentsList',
 
-                $this->RenderWith("PaymentMethods")
+                $this->RenderWith("Sunnysideup/PaymentPaypal/Includes/PaymentMethods")
             )
         );
     }
