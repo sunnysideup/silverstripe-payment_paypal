@@ -12,6 +12,8 @@ use SilverStripe\Core\Convert;
 use SilverStripe\SiteConfig\SiteConfig;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
+use Sunnysideup\Ecommerce\Config\EcommerceConfig;
+use Sunnysideup\Ecommerce\Model\Money\EcommerceCurrency;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
 use Sunnysideup\Ecommerce\Model\Order;
 use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentFailure;
@@ -33,7 +35,7 @@ use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentProcessin
 
 class PayPalExpressCheckoutPayment extends EcommercePayment
 {
-    private static $debug = false;
+    private static $debug = true;
 
     private static $continue_button_text = 'Continue to PayPal';
 
@@ -58,7 +60,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     private static $privacy_link = "https://www.paypal.com/us/cgi-bin/webscr?cmd=p/gen/ua/policy_privacy-outside";
 
     //config
-    private static $test_mode = true; //on by default
+    private static $test_mode = false; //on by default
     private static $API_UserName;
     private static $API_Password;
     private static $API_Signature;
@@ -118,7 +120,12 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
             user_error('You are attempting to make a payment without the necessary credentials set', E_USER_ERROR);
         }
         $data = $this->Order()->BillingAddress()->toMap();
-        $paymenturl = $this->getTokenURL($this->Amount->Amount, $this->Amount->Currency, $data);
+        $amount = $this->Amount->Amount;
+        $currency = $this->Amount->Currency;
+        if (! $currency) {
+            $currency = EcommerceConfig::get(EcommerceCurrency::class, 'default_currency');;
+        }
+        $paymenturl = $this->getTokenURL($amount, $currency, $data);
         $this->Status = "Incomplete";
         $this->write();
         if ($paymenturl) {
@@ -325,7 +332,7 @@ HTML;
         $data = array_merge($this->Config()->get("custom_settings"), $data);
         $response = $this->apiCall('SetExpressCheckout', $data);
 
-
+        $response = $response + $this->deformatNVP($response['body']);
         $mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
             $this->addDebugInfo("RESPONSE: " . print_r($response, 1));
