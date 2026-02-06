@@ -18,7 +18,7 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
 {
     private static $url_segment = 'paypalexpresscheckoutpaymenthandler';
 
-    protected $payment = null; //only need to get this once
+    protected $payment; //only need to get this once
 
     private static $allowed_actions = array(
         'confirm',
@@ -68,7 +68,6 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
             //something went wrong?	..perhaps trying to pay for a payment that has already been processed
         }
         $this->doRedirect();
-        return;
     }
 
     public function cancel($request)
@@ -80,7 +79,6 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
             $payment->write();
         }
         $this->doRedirect();
-        return;
     }
 
     protected function doRedirect()
@@ -90,8 +88,7 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
             $this->redirect($obj->Link());
             return;
         }
-        $this->redirect(Director::absoluteURL('home', true)); //TODO: make this customisable in Payment_Controllers
-        return;
+        $this->redirect(Director::absoluteURL('home', true));
     }
 
     public static function return_link()

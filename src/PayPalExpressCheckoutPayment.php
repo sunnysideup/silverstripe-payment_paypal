@@ -64,7 +64,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     private static $API_UserName;
     private static $API_Password;
     private static $API_Signature;
-    private static $sBNCode = null; // BN Code 	is only applicable for partners
+    private static $sBNCode; // BN Code 	is only applicable for partners
     private static $version = '64';
 
     //set custom settings
@@ -175,7 +175,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
         // 5) Redirection Informations
 
-        $inputs['cancel_return'] = Director::absoluteBaseURL() . PayPalExpressCheckoutPaymentHandler::cancel_link($inputs['custom']);
+        $inputs['cancel_return'] = Director::absoluteBaseURL() . PayPalExpressCheckoutPaymentHandler::cancel_link();
         $inputs['return'] = Director::absoluteBaseURL() . PayPalExpressCheckoutPaymentHandler::complete_link();
         $inputs['rm'] = '2';
         // Add Here The Notify URL
@@ -221,7 +221,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         $inputs['email'] = $member->Email;
 
         // 8) Form Creation
-        if (is_array($inputs) && count($inputs)) {
+        if (count($inputs)) {
             foreach ($inputs as $name => $value) {
                 $ATT_value = Convert::raw2att($value);
                 $fields .= "<input type=\"hidden\" name=\"$name\" value=\"$ATT_value\" />";
@@ -332,7 +332,7 @@ HTML;
         $data = array_merge($this->Config()->get("custom_settings"), $data);
         $response = $this->apiCall('SetExpressCheckout', $data);
 
-        $response = $response + $this->deformatNVP($response['body']);
+        $response += $this->deformatNVP($response['body']);
         $mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
             $this->addDebugInfo("RESPONSE: " . print_r($response, 1));
@@ -347,7 +347,7 @@ HTML;
                 "\nResponse: " . print_r($response, true);
             $this->addDebugInfo("DEBUG MESSAGE: " . $debugmessage);
         }
-        if (!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")) {
+        if (!isset($response['ACK']) ||  strtoupper($response['ACK']) !== "SUCCESS" && strtoupper($response['ACK']) !== "SUCCESSWITHWARNING") {
             return null;
         }
         //get and save token for later
@@ -371,7 +371,7 @@ HTML;
             'IPADDRESS' => urlencode($_SERVER['SERVER_NAME'])
         );
         $response = $this->apiCall('DoExpressCheckoutPayment', $data);
-        if (!isset($response['ACK']) ||  !(strtoupper($response['ACK']) == "SUCCESS" || strtoupper($response['ACK']) == "SUCCESSWITHWARNING")) {
+        if (!isset($response['ACK']) ||  strtoupper($response['ACK']) !== "SUCCESS" && strtoupper($response['ACK']) !== "SUCCESSWITHWARNING") {
             return null;
         }
         if (isset($response["PAYMENTINFO_0_TRANSACTIONID"])) {
@@ -405,13 +405,11 @@ HTML;
                     $this->Status = 'Failure';
                     break;
                 case "REVERSED":
+                case "FAILED":
                     $this->Status = 'Failure';
                     break;
                 case "VOIDED":
                     $this->Message = _t('PayPalExpressCheckoutPayment.VOIDED', "An authorization for this transaction has been voided.");
-                    $this->Status = 'Failure';
-                    break;
-                case "FAILED":
                     $this->Status = 'Failure';
                     break;
                 case "CANCEL-REVERSAL": // A reversal has been canceled; for example, when you win a dispute and the funds for the reversal have been returned to you.
@@ -436,6 +434,7 @@ HTML;
         }
         //$reasonCode		= $response["REASONCODE"];
         $this->write();
+        return null;
     }
 
     protected function getPendingReason($reason)
@@ -505,11 +504,6 @@ HTML;
             'status' => $status,
             'body' => $body,
         ];
-
-        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
-            $this->addDebugInfo('RESPONSE ....  //// : ' . print_r($response, 1));
-        }
-        return $this->deformatNVP($response->getBody());
     }
 
     protected function deformatNVP($nvpstr)
