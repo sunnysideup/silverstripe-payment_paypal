@@ -2,14 +2,9 @@
 
 namespace Sunnysideup\PaymentPaypal;
 
-
-
-
-use SilverStripe\Control\Director;
 use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Config;
-
-
 
 /**
  * Handler for responses from the PayPal site
@@ -20,16 +15,16 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
 
     protected $payment; //only need to get this once
 
-    private static $allowed_actions = array(
+    private static $allowed_actions = [
         'confirm',
-        'cancel'
-    );
+        'cancel',
+    ];
 
     public function Link($action = null)
     {
         return Controller::join_links(
             Director::baseURL(),
-            $this->Config()->get("url_segment"),
+            $this->Config()->get('url_segment'),
             $action
         );
     }
@@ -39,12 +34,12 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
         if ($this->payment) {
             return $this->payment;
         } elseif ($token = Controller::getRequest()->getVar('token')) {
-            $payment =  PayPalExpressCheckoutPayment::get()
+            $payment = PayPalExpressCheckoutPayment::get()
                 ->filter(
-                    array(
-                        "Token" => $token,
-                        "Status" => "Incomplete"
-                    )
+                    [
+                        'Token' => $token,
+                        'Status' => 'Incomplete',
+                    ]
                 )
                 ->first();
             $this->payment = $payment;
@@ -74,8 +69,8 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
     {
         if ($payment = $this->payment()) {
             //TODO: do API call to gather further information
-            $payment->Status = "Failure";
-            $payment->Message = _t('PayPalExpressCheckoutPayment.USERCANCELLED', "User cancelled");
+            $payment->Status = 'Failure';
+            $payment->Message = _t('PayPalExpressCheckoutPayment.USERCANCELLED', 'User cancelled');
             $payment->write();
         }
         $this->doRedirect();
@@ -93,24 +88,25 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
 
     public static function return_link()
     {
-        return self::make_link("confirm");
+        return self::make_link('confirm');
     }
 
     public static function cancel_link()
     {
-        return self::make_link("cancel");
+        return self::make_link('cancel');
     }
+
     public static function complete_link()
     {
 
-        return self::make_link("complete");
+        return self::make_link('complete');
     }
 
     protected static function make_link($action)
     {
         Controller::join_links(
             Director::baseURL(),
-            Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, "url_segment"),
+            Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, 'url_segment'),
             $action
         );
     }

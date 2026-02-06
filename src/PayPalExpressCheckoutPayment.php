@@ -3,15 +3,14 @@
 namespace Sunnysideup\PaymentPaypal;
 
 use GuzzleHttp\Client;
-use SilverStripe\Forms\LiteralField;
-use SilverStripe\Forms\FieldList;
 use SilverStripe\Control\Controller;
-use SilverStripe\View\Requirements;
 use SilverStripe\Control\Director;
-use SilverStripe\Core\Convert;
-use SilverStripe\SiteConfig\SiteConfig;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Convert;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\LiteralField;
+use SilverStripe\SiteConfig\SiteConfig;
 use Sunnysideup\Ecommerce\Config\EcommerceConfig;
 use Sunnysideup\Ecommerce\Model\Money\EcommerceCurrency;
 use Sunnysideup\Ecommerce\Model\Money\EcommercePayment;
@@ -28,10 +27,7 @@ use Sunnysideup\Ecommerce\Money\Payment\PaymentResults\EcommercePaymentProcessin
  * Integration guide: https://cms.paypal.com/cms_content/US/en_US/files/developer/PP_ExpressCheckout_IntegrationGuide.pdf
  * API reference: 	  https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/howto_api_reference
  * Uses the Name-Value Pair API protocol
- *
  */
-
-
 
 class PayPalExpressCheckoutPayment extends EcommercePayment
 {
@@ -39,47 +35,57 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
     private static $continue_button_text = 'Continue to PayPal';
 
-
     private static $table_name = 'PayPalExpressCheckoutPayment';
 
-    private static $db = array(
+    private static $db = [
         'Token' => 'Varchar(30)',
         'PayerID' => 'Varchar(30)',
         'TransactionID' => 'Varchar(30)',
         'AuthorisationCode' => 'Text',
-        'Debug' => 'HTMLText'
-    );
-    private static $logo = "sunnysideup/payment_paypal: client/dist/images/paypal.png";
+        'Debug' => 'HTMLText',
+    ];
+
+    private static $logo = 'sunnysideup/payment_paypal: client/dist/images/paypal.png';
+
     private static $payment_methods = [];
 
     //PayPal URLs
-    private static $test_API_Endpoint = "https://api-3t.sandbox.paypal.com/nvp";
-    private static $test_PAYPAL_URL = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=";
-    private static $API_Endpoint = "https://api-3t.paypal.com/nvp";
-    private static $PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=";
-    private static $privacy_link = "https://www.paypal.com/us/cgi-bin/webscr?cmd=p/gen/ua/policy_privacy-outside";
+    private static $test_API_Endpoint = 'https://api-3t.sandbox.paypal.com/nvp';
+
+    private static $test_PAYPAL_URL = 'https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=';
+
+    private static $API_Endpoint = 'https://api-3t.paypal.com/nvp';
+
+    private static $PAYPAL_URL = 'https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=';
+
+    private static $privacy_link = 'https://www.paypal.com/us/cgi-bin/webscr?cmd=p/gen/ua/policy_privacy-outside';
 
     //config
     private static $test_mode = false; //on by default
+
     private static $API_UserName;
+
     private static $API_Password;
+
     private static $API_Signature;
+
     private static $sBNCode; // BN Code 	is only applicable for partners
+
     private static $version = '64';
 
     //set custom settings
-    private static $custom_settings = array(
+    private static $custom_settings = [
         //design
         //'HDRIMG' => "http://www.mysite.com/images/logo.jpg", //max size = 750px wide by 90px high, and good to be on secure server
         //'HDRBORDERCOLOR' => 'CCCCCC', //header border
         //'HDRBACKCOLOR' => '00FFFF', //header background
         //'PAYFLOWCOLOR'=> 'AAAAAA' //payflow colour
         //'PAGESTYLE' => //page style set in merchant account settings
-        'SOLUTIONTYPE' => 'Sole' //require paypal account, or not. Can be or 'Mark' (required) or 'Sole' (not required)
+        'SOLUTIONTYPE' => 'Sole', //require paypal account, or not. Can be or 'Mark' (required) or 'Sole' (not required)
         //'BRANDNAME'  => 'my site name'//override business name in checkout
         //'CUSTOMERSERVICENUMBER' => '0800 1234 5689'//number to call to resolve payment issues
         //'NOSHIPPING' => 1 //disable showing shipping details
-    );
+    ];
 
     public function getCMSFields()
     {
@@ -96,13 +102,12 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         $logo = $this->config()->get('logo');
         $src = ModuleResourceLoader::singleton()->resolveURL($logo);
         $logo = '<img src="' . $src . '" alt="Credit card payments powered by PayPal"/>';
-        $privacyLink = '<a href="' . $this->Config()->get("privacy_link") . '" target="_blank" title="Read PayPal\'s privacy policy">' . $logo . '</a><br/>';
+        $privacyLink = '<a href="' . $this->Config()->get('privacy_link') . '" target="_blank" title="Read PayPal\'s privacy policy">' . $logo . '</a><br/>';
         return new FieldList(
             new LiteralField('PayPalInfo', $privacyLink),
             new LiteralField(
                 'PayPalPaymentsList',
-
-                $this->RenderWith("Sunnysideup/PaymentPaypal/Includes/PaymentMethods")
+                $this->RenderWith('Sunnysideup/PaymentPaypal/Includes/PaymentMethods')
             )
         );
     }
@@ -116,23 +121,24 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     public function processPayment($data, $form)
     {
         //sanity checks for credentials
-        if (!$this->Config()->get("API_UserName") || !$this->Config()->get("API_Password") || !$this->Config()->get("API_Signature")) {
+        if (! $this->Config()->get('API_UserName') || ! $this->Config()->get('API_Password') || ! $this->Config()->get('API_Signature')) {
             user_error('You are attempting to make a payment without the necessary credentials set', E_USER_ERROR);
         }
         $data = $this->Order()->BillingAddress()->toMap();
         $amount = $this->Amount->Amount;
         $currency = $this->Amount->Currency;
         if (! $currency) {
-            $currency = EcommerceConfig::get(EcommerceCurrency::class, 'default_currency');;
+            $currency = EcommerceConfig::get(EcommerceCurrency::class, 'default_currency');
+            ;
         }
         $paymenturl = $this->getTokenURL($amount, $currency, $data);
-        $this->Status = "Incomplete";
+        $this->Status = 'Incomplete';
         $this->write();
         if ($paymenturl) {
             Controller::curr()->redirect($paymenturl); //redirect to payment gateway
             return EcommercePaymentProcessing::create();
         }
-        $this->Message = _t('PayPalExpressCheckoutPayment.COULDNOTBECONTACTED', "PayPal could not be contacted");
+        $this->Message = _t('PayPalExpressCheckoutPayment.COULDNOTBECONTACTED', 'PayPal could not be contacted');
         $this->Status = 'Failure';
         $this->write();
         return EcommercePaymentFailure::create($this->Message);
@@ -143,7 +149,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
      */
     public function PayPalForm()
     {
-        user_error("This form is no longer used.");
+        user_error('This form is no longer used.');
         // 1) Main Information
         $fields = '';
         $order = $this->Order();
@@ -152,7 +158,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
         // 2) Main Settings
 
-        $url = $this->Config()->get("test_mode") ? $this->Config()->get("test_url") : $this->Config()->get("url");
+        $url = $this->Config()->get('test_mode') ? $this->Config()->get('test_url') : $this->Config()->get('url');
         $inputs['cmd'] = '_cart';
         $inputs['upload'] = '1';
 
@@ -168,7 +174,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
         // 4) Payment Informations And Authorisation Code
 
-        $inputs['business'] = $this->Config()->get("test_mode") ? $this->Config()->get("test_account_email") : $this->Config()->get("account_email");
+        $inputs['business'] = $this->Config()->get('test_mode') ? $this->Config()->get('test_account_email') : $this->Config()->get('account_email');
         $inputs['custom'] = $this->ID . '-' . $this->AuthorisationCode;
         // Add Here The Shipping And/Or Taxes
         $inputs['currency_code'] = $this->Currency;
@@ -182,30 +188,30 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
         // 6) PayPal Pages Style Optional Informations
 
-        if ($this->Config()->get("continue_button_text")) {
-            $inputs['cbt'] = $this->Config()->get("continue_button_text");
+        if ($this->Config()->get('continue_button_text')) {
+            $inputs['cbt'] = $this->Config()->get('continue_button_text');
         }
 
-        if ($this->Config()->get("header_image_url")) {
-            $inputs['cpp_header_image'] = urlencode($this->Config()->get("header_image_url"));
+        if ($this->Config()->get('header_image_url')) {
+            $inputs['cpp_header_image'] = urlencode($this->Config()->get('header_image_url'));
         }
-        if ($this->Config()->get("header_back_color")) {
-            $inputs['cpp_headerback_color'] = $this->Config()->get("header_back_color");
+        if ($this->Config()->get('header_back_color')) {
+            $inputs['cpp_headerback_color'] = $this->Config()->get('header_back_color');
         }
-        if ($this->Config()->get("header_border_color")) {
-            $inputs['cpp_headerborder_color'] = $this->Config()->get("header_border_color");
+        if ($this->Config()->get('header_border_color')) {
+            $inputs['cpp_headerborder_color'] = $this->Config()->get('header_border_color');
         }
-        if ($this->Config()->get("payflow_color")) {
-            $inputs['cpp_payflow_color'] = $this->Config()->get("payflow_color");
+        if ($this->Config()->get('payflow_color')) {
+            $inputs['cpp_payflow_color'] = $this->Config()->get('payflow_color');
         }
-        if ($this->Config()->get("back_color")) {
-            $inputs['cs'] = $this->Config()->get("back_color");
+        if ($this->Config()->get('back_color')) {
+            $inputs['cs'] = $this->Config()->get('back_color');
         }
-        if ($this->Config()->get("image_url")) {
-            $inputs['image_url'] = urlencode($this->Config()->get("image_url"));
+        if ($this->Config()->get('image_url')) {
+            $inputs['image_url'] = urlencode($this->Config()->get('image_url'));
         }
-        if ($this->Config()->get("page_style")) {
-            $inputs['page_style'] = $this->Config()->get("page_style");
+        if ($this->Config()->get('page_style')) {
+            $inputs['page_style'] = $this->Config()->get('page_style');
         }
 
         // 7) Prepopulating Customer Informations
@@ -248,9 +254,6 @@ HTML;
         $this->AuthorisationCode = md5(uniqid(rand(), true));
     }
 
-
-
-
     /**
      * Requests a Token url, based on the provided Name-Value-Pair fields
      * See docs for more detail on these fields:
@@ -259,9 +262,9 @@ HTML;
      * Note: some of these values will override the paypal merchant account settings.
      * Note: not all fields are listed here.
      */
-    protected function getTokenURL($paymentAmount, $currencyCodeType, $extradata = array())
+    protected function getTokenURL($paymentAmount, $currencyCodeType, $extradata = [])
     {
-        $data = array(
+        $data = [
             //payment info
             'PAYMENTREQUEST_0_AMT' => $paymentAmount,
             'PAYMENTREQUEST_0_CURRENCYCODE' => $currencyCodeType, //TODO: check to be sure all currency codes match the SS ones
@@ -290,11 +293,11 @@ HTML;
             //TODO: Probably overkill, but you can even include the prices,qty,weight,tax etc for individual sale items
             //other settings
             //'LOCALECODE' => //locale, or default to US
-            'LANDINGPAGE' => 'Billing' //can be 'Billing' or 'Login'
-        );
+            'LANDINGPAGE' => 'Billing', //can be 'Billing' or 'Login'
+        ];
 
-        if (!isset($extradata['Name'])) {
-            $arr =  array();
+        if (! isset($extradata['Name'])) {
+            $arr = [];
             if (isset($extradata['FirstName'])) {
                 $arr[] = $extradata['FirstName'];
             }
@@ -306,10 +309,10 @@ HTML;
             }
             $extradata['Name'] = implode(' ', $arr);
         }
-        $extradata["OrderID"] = SiteConfig::current_site_config()->Title . " " . $this->Order()->getTitle();
+        $extradata['OrderID'] = SiteConfig::current_site_config()->Title . ' ' . $this->Order()->getTitle();
         //add member & shipping fields, etc ...this will pre-populate the paypal login / create account form
         foreach (
-            array(
+            [
                 'Email' => 'EMAIL',
                 'Name' => 'PAYMENTREQUEST_0_SHIPTONAME',
                 'Address' => 'PAYMENTREQUEST_0_SHIPTOSTREET',
@@ -319,8 +322,8 @@ HTML;
                 'Region' => 'PAYMENTREQUEST_0_SHIPTOPHONENUM',
                 'Phone' => 'PAYMENTREQUEST_0_SHIPTOPHONENUM',
                 'Country' => 'PAYMENTREQUEST_0_SHIPTOCOUNTRYCODE',
-                'OrderID' => 'PAYMENTREQUEST_0_DESC'
-            ) as $field => $val
+                'OrderID' => 'PAYMENTREQUEST_0_DESC',
+            ] as $field => $val
         ) {
             if (isset($extradata[$field])) {
                 $data[$val] = $extradata[$field];
@@ -329,25 +332,25 @@ HTML;
             }
         }
         //set design settings
-        $data = array_merge($this->Config()->get("custom_settings"), $data);
+        $data = array_merge($this->Config()->get('custom_settings'), $data);
         $response = $this->apiCall('SetExpressCheckout', $data);
 
         $response += $this->deformatNVP($response['body']);
-        $mode = ($this->Config()->get("test_mode") === true) ? "test" : "live";
-        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
-            $this->addDebugInfo("RESPONSE: " . print_r($response, 1));
-            $debugmessage = "PayPal Debug:" .
+        $mode = ($this->Config()->get('test_mode') === true) ? 'test' : 'live';
+        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, 'debug')) {
+            $this->addDebugInfo('RESPONSE: ' . print_r($response, 1));
+            $debugmessage = 'PayPal Debug:' .
                 "\nMode: $mode" .
                 "\nAPI url: " . $this->getApiEndpoint() .
                 "\nRedirect url: " . $this->getPayPalURL($response['TOKEN']) .
-                "\nUsername: " . $this->Config()->get("API_UserName") .
-                "\nPassword: " . $this->Config()->get("API_Password") .
-                "\nSignature: " . $this->Config()->get("API_Signature") .
+                "\nUsername: " . $this->Config()->get('API_UserName') .
+                "\nPassword: " . $this->Config()->get('API_Password') .
+                "\nSignature: " . $this->Config()->get('API_Signature') .
                 "\nRequest Data: " . print_r($data, true) .
                 "\nResponse: " . print_r($response, true);
-            $this->addDebugInfo("DEBUG MESSAGE: " . $debugmessage);
+            $this->addDebugInfo('DEBUG MESSAGE: ' . $debugmessage);
         }
-        if (!isset($response['ACK']) ||  strtoupper($response['ACK']) !== "SUCCESS" && strtoupper($response['ACK']) !== "SUCCESSWITHWARNING") {
+        if (! isset($response['ACK']) || strtoupper($response['ACK']) !== 'SUCCESS' && strtoupper($response['ACK']) !== 'SUCCESSWITHWARNING') {
             return null;
         }
         //get and save token for later
@@ -362,21 +365,21 @@ HTML;
      */
     public function confirmPayment()
     {
-        $data = array(
+        $data = [
             'PAYERID' => $this->PayerID,
             'TOKEN' => $this->Token,
-            'PAYMENTREQUEST_0_PAYMENTACTION' => "Sale",
+            'PAYMENTREQUEST_0_PAYMENTACTION' => 'Sale',
             'PAYMENTREQUEST_0_AMT' => $this->Amount->Amount,
             'PAYMENTREQUEST_0_CURRENCYCODE' => $this->Amount->Currency,
-            'IPADDRESS' => urlencode($_SERVER['SERVER_NAME'])
-        );
+            'IPADDRESS' => urlencode($_SERVER['SERVER_NAME']),
+        ];
         $response = $this->apiCall('DoExpressCheckoutPayment', $data);
-        if (!isset($response['ACK']) ||  strtoupper($response['ACK']) !== "SUCCESS" && strtoupper($response['ACK']) !== "SUCCESSWITHWARNING") {
+        if (! isset($response['ACK']) || strtoupper($response['ACK']) !== 'SUCCESS' && strtoupper($response['ACK']) !== 'SUCCESSWITHWARNING') {
             return null;
         }
-        if (isset($response["PAYMENTINFO_0_TRANSACTIONID"])) {
+        if (isset($response['PAYMENTINFO_0_TRANSACTIONID'])) {
             //' Unique transaction ID of the payment. Note:  If the PaymentAction of the request was Authorization or Order, this value is your AuthorizationID for use with the Authorization & Capture APIs.
-            $this->TransactionID    = $response["PAYMENTINFO_0_TRANSACTIONID"];
+            $this->TransactionID = $response['PAYMENTINFO_0_TRANSACTIONID'];
         }
         //$transactionType 		= $response["PAYMENTINFO_0_TRANSACTIONTYPE"]; //' The type of transaction Possible values: l  cart l  express-checkout
         //$paymentType			= $response["PAYMENTTYPE"];  	//' Indicates whether the payment is instant or delayed. Possible values: l  none l  echeck l  instant
@@ -389,45 +392,45 @@ HTML;
         //$settleAmt				= $response["SETTLEAMT"];  		//' Amount deposited in your PayPal account after a currency conversion.
         //$taxAmt					= $response["TAXAMT"];  		//' Tax charged on the transaction.
         //$exchangeRate			= $response["EXCHANGERATE"];  	//' Exchange rate if a currency conversion occurred. Relevant only if your are billing in their non-primary currency. If the customer chooses to pay with a currency other than the non-primary currency, the conversion occurs in the customer's account.
-        if (isset($response["PAYMENTINFO_0_PAYMENTSTATUS"])) {
-            switch (strtoupper($response["PAYMENTINFO_0_PAYMENTSTATUS"])) {
-                case "PROCESSED":
-                case "COMPLETED":
+        if (isset($response['PAYMENTINFO_0_PAYMENTSTATUS'])) {
+            switch (strtoupper($response['PAYMENTINFO_0_PAYMENTSTATUS'])) {
+                case 'PROCESSED':
+                case 'COMPLETED':
                     $this->Status = 'Success';
-                    $this->Message = _t('PayPalExpressCheckoutPayment.SUCCESS', "The payment has been completed, and the funds have been successfully transferred");
+                    $this->Message = _t('PayPalExpressCheckoutPayment.SUCCESS', 'The payment has been completed, and the funds have been successfully transferred');
                     break;
-                case "EXPIRED":
-                    $this->Message = _t('PayPalExpressCheckoutPayment.AUTHORISATION', "The authorization period for this payment has been reached");
+                case 'EXPIRED':
+                    $this->Message = _t('PayPalExpressCheckoutPayment.AUTHORISATION', 'The authorization period for this payment has been reached');
                     $this->Status = 'Failure';
                     break;
-                case "DENIED":
-                    $this->Message = _t('PayPalExpressCheckoutPayment.FAILURE', "Payment was denied");
+                case 'DENIED':
+                    $this->Message = _t('PayPalExpressCheckoutPayment.FAILURE', 'Payment was denied');
                     $this->Status = 'Failure';
                     break;
-                case "REVERSED":
-                case "FAILED":
+                case 'REVERSED':
+                case 'FAILED':
                     $this->Status = 'Failure';
                     break;
-                case "VOIDED":
-                    $this->Message = _t('PayPalExpressCheckoutPayment.VOIDED', "An authorization for this transaction has been voided.");
+                case 'VOIDED':
+                    $this->Message = _t('PayPalExpressCheckoutPayment.VOIDED', 'An authorization for this transaction has been voided.');
                     $this->Status = 'Failure';
                     break;
-                case "CANCEL-REVERSAL": // A reversal has been canceled; for example, when you win a dispute and the funds for the reversal have been returned to you.
+                case 'CANCEL-REVERSAL': // A reversal has been canceled; for example, when you win a dispute and the funds for the reversal have been returned to you.
                     break;
-                case "IN-PROGRESS":
-                    $this->Message = _t('PayPalExpressCheckoutPayment.INPROGRESS', "The transaction has not terminated"); //, e.g. an authorization may be awaiting completion.";
+                case 'IN-PROGRESS':
+                    $this->Message = _t('PayPalExpressCheckoutPayment.INPROGRESS', 'The transaction has not terminated'); //, e.g. an authorization may be awaiting completion.";
                     break;
-                case "PARTIALLY-REFUNDED":
-                    $this->Message = _t('PayPalExpressCheckoutPayment.PARTIALLYREFUNDED', "The payment has been partially refunded.");
+                case 'PARTIALLY-REFUNDED':
+                    $this->Message = _t('PayPalExpressCheckoutPayment.PARTIALLYREFUNDED', 'The payment has been partially refunded.');
                     break;
-                case "PENDING":
-                    $this->Message = _t('PayPalExpressCheckoutPayment.PENDING', "The payment is pending.");
-                    if (isset($response["PAYMENTINFO_0_PENDINGREASON"])) {
-                        $this->Message .= " " . $this->getPendingReason($response["PAYMENTINFO_0_PENDINGREASON"]);
+                case 'PENDING':
+                    $this->Message = _t('PayPalExpressCheckoutPayment.PENDING', 'The payment is pending.');
+                    if (isset($response['PAYMENTINFO_0_PENDINGREASON'])) {
+                        $this->Message .= ' ' . $this->getPendingReason($response['PAYMENTINFO_0_PENDINGREASON']);
                     }
                     break;
-                case "REFUNDED":
-                    $this->Message = _t('PayPalExpressCheckoutPayment.REFUNDED', "Payment refunded.");
+                case 'REFUNDED':
+                    $this->Message = _t('PayPalExpressCheckoutPayment.REFUNDED', 'Payment refunded.');
                     break;
                 default:
             }
@@ -440,46 +443,45 @@ HTML;
     protected function getPendingReason($reason)
     {
         switch ($reason) {
-            case "address":
-                return _t('PayPalExpressCheckoutPayment.PENDING.ADDRESS', "A confirmed shipping address was not provided.");
-            case "authorization":
-                return _t('PayPalExpressCheckoutPayment.PENDING.AUTHORISATION', "Payment has been authorised, but not settled.");
-            case "echeck":
-                return _t('PayPalExpressCheckoutPayment.PENDING.ECHECK', "eCheck has not cleared.");
-            case "intl":
-                return _t('PayPalExpressCheckoutPayment.PENDING.INTERNATIONAL', "International: payment must be accepted or denied manually.");
-            case "multicurrency":
-                return _t('PayPalExpressCheckoutPayment.PENDING.MULTICURRENCY', "Multi-currency: payment must be accepted or denied manually.");
-            case "order":
-            case "paymentreview":
-            case "unilateral":
-            case "verify":
-            case "other":
+            case 'address':
+                return _t('PayPalExpressCheckoutPayment.PENDING.ADDRESS', 'A confirmed shipping address was not provided.');
+            case 'authorization':
+                return _t('PayPalExpressCheckoutPayment.PENDING.AUTHORISATION', 'Payment has been authorised, but not settled.');
+            case 'echeck':
+                return _t('PayPalExpressCheckoutPayment.PENDING.ECHECK', 'eCheck has not cleared.');
+            case 'intl':
+                return _t('PayPalExpressCheckoutPayment.PENDING.INTERNATIONAL', 'International: payment must be accepted or denied manually.');
+            case 'multicurrency':
+                return _t('PayPalExpressCheckoutPayment.PENDING.MULTICURRENCY', 'Multi-currency: payment must be accepted or denied manually.');
+            case 'order':
+            case 'paymentreview':
+            case 'unilateral':
+            case 'verify':
+            case 'other':
         }
     }
 
     /**
      * Handles actual communication with API server.
      */
-    protected function apiCall($method, $data = array())
+    protected function apiCall($method, $data = [])
     {
         $this->addDebugInfo('---------------------------------------');
         $this->addDebugInfo('---------------------------------------');
         $this->addDebugInfo('---------------------------------------');
-        $postfields = array(
+        $postfields = [
             'METHOD' => $method,
-            'VERSION' => $this->Config()->get("version"),
-            'USER' => $this->Config()->get("API_UserName"),
-            'PWD' => $this->Config()->get("API_Password"),
-            'SIGNATURE' => $this->Config()->get("API_Signature"),
-            'BUTTONSOURCE' => $this->Config()->get("sBNCode")
-        );
+            'VERSION' => $this->Config()->get('version'),
+            'USER' => $this->Config()->get('API_UserName'),
+            'PWD' => $this->Config()->get('API_Password'),
+            'SIGNATURE' => $this->Config()->get('API_Signature'),
+            'BUTTONSOURCE' => $this->Config()->get('sBNCode'),
+        ];
 
-
-        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, "debug")) {
-            $this->addDebugInfo("STANDARD POSTING FIELDS ....  //// : " . print_r($postfields, 1));
-            $this->addDebugInfo("ADDITIONAL POSTING FIELDS ....  //// : " . print_r($data, 1));
-            $this->addDebugInfo("SENDING TO ....  //// : " . print_r($this->getApiEndpoint(), 1));
+        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, 'debug')) {
+            $this->addDebugInfo('STANDARD POSTING FIELDS ....  //// : ' . print_r($postfields, 1));
+            $this->addDebugInfo('ADDITIONAL POSTING FIELDS ....  //// : ' . print_r($data, 1));
+            $this->addDebugInfo('SENDING TO ....  //// : ' . print_r($this->getApiEndpoint(), 1));
         }
         $postfields = array_merge($postfields, $data);
         //Make POST request to Paypal via RESTful service
@@ -498,7 +500,7 @@ HTML;
 
         // status and body:
         $status = $response->getStatusCode();
-        $body = (string)$response->getBody();
+        $body = (string) $response->getBody();
 
         return [
             'status' => $status,
@@ -527,15 +529,14 @@ HTML;
 
     protected function getApiEndpoint()
     {
-        return ($this->Config()->get("test_mode") === true) ? $this->Config()->get("test_API_Endpoint") : $this->Config()->get("API_Endpoint");
+        return ($this->Config()->get('test_mode') === true) ? $this->Config()->get('test_API_Endpoint') : $this->Config()->get('API_Endpoint');
     }
 
     protected function getPayPalURL($token)
     {
-        $url = ($this->Config()->get("test_mode") === true) ? $this->Config()->get("test_PAYPAL_URL") : $this->Config()->get("PAYPAL_URL");
+        $url = ($this->Config()->get('test_mode') === true) ? $this->Config()->get('test_PAYPAL_URL') : $this->Config()->get('PAYPAL_URL');
         return $url . $token . '&useraction=commit'; //useraction=commit ensures the payment is confirmed on PayPal, and not on a merchant confirm page.
     }
-
 
     protected function addDebugInfo($msg)
     {
