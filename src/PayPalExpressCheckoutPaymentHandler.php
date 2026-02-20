@@ -1,113 +1,158 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sunnysideup\PaymentPaypal;
 
+use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
 
 /**
- * Handler for responses from the PayPal site
+ * Handler for responses from the PayPal site.
  */
 class PayPalExpressCheckoutPaymentHandler extends Controller
 {
-    private static $url_segment = 'paypalexpresscheckoutpaymenthandler';
+    private static string $url_segment = 'paypalexpresscheckoutpaymenthandler';
 
-    protected $payment; //only need to get this once
-
-    private static $allowed_actions = [
+    private static array $allowed_actions = [
         'confirm',
         'cancel',
     ];
 
-    public function Link($action = null)
+    protected ?PayPalExpressCheckoutPayment $payment = null;
+
+    public function Link($action = null): string
     {
-        return Controller::join_links(
-            Director::baseURL(),
-            $this->Config()->get('url_segment'),
-            $action
-        );
+        return self::makeLink($action);
     }
 
-    public function payment()
+    public static function return_link(): string
     {
-        if ($this->payment) {
-            return $this->payment;
-        } elseif ($token = Controller::getRequest()->getVar('token')) {
-            $payment = PayPalExpressCheckoutPayment::get()
-                ->filter(
-                    [
-                        'Token' => $token,
-                        'Status' => 'Incomplete',
-                    ]
-                )
-                ->first();
-            $this->payment = $payment;
-            $this->payment->init();
-            return $this->payment;
-        }
-        return null;
+        return self::makeLink('confirm');
     }
 
-    public function confirm($request)
+    public static function cancel_link(): string
     {
-        //TODO: pretend the user confirmed, and skip straight to results. (check that this is allowed)
-        //TODO: get updated shipping details from paypal??
-        if ($payment = $this->payment()) {
-            if ($pid = Controller::getRequest()->getVar('PayerID')) {
-                $payment->PayerID = $pid;
-                $payment->write();
-                $payment->confirmPayment();
-            }
-        } else {
-            //something went wrong?	..perhaps trying to pay for a payment that has already been processed
+        return self::makeLink('cancel');
+    }
+
+    /**
+     * Note: "complete" is not an allowed action in this controller.
+     * Keep only if something external relies on this URL.
+     */
+    public static function complete_link(): string
+    {
+        return self::makeLink('complete');
+    }
+
+    public function confirm(HTTPRequest $request): void
+    {
+        $this->logRequest($request);
+
+        $payment = $this->getPayment($request);
+        if (!$payment) {
+            user_error('No payment found for token: ' . (string)$request->getVar('token'), E_USER_WARNING);
+            $this->doRedirect();
+            return;
         }
+
+        $payerId = (string)$request->getVar('PayerID');
+        if ($payerId !== '') {
+            $payment->PayerID = $payerId;
+            $payment->write();
+            $payment->confirmPayment();
+        }
+
         $this->doRedirect();
     }
 
-    public function cancel($request)
+    public function cancel(HTTPRequest $request): void
     {
-        if ($payment = $this->payment()) {
-            //TODO: do API call to gather further information
+        $this->logRequest($request);
+
+        $payment = $this->getPayment($request);
+        if ($payment) {
             $payment->Status = 'Failure';
             $payment->Message = _t('PayPalExpressCheckoutPayment.USERCANCELLED', 'User cancelled');
             $payment->write();
         }
+
         $this->doRedirect();
     }
 
-    protected function doRedirect()
+    protected function doRedirect(): void
     {
-        $payment = $this->payment();
-        if ($payment && $obj = $payment->PaidObject()) {
-            $this->redirect($obj->Link());
+        $payment = $this->getPayment($this->getRequest());
+
+        $paidObject = $payment?->PaidObject();
+        if ($paidObject) {
+            $this->redirect($paidObject->Link());
             return;
         }
-        $this->redirect(Director::absoluteURL('home', true));
+
+        return $this->httpError(404, _t('PayPalExpressCheckoutPayment.NOTFOUND', 'Payment not found'));
     }
 
-    public static function return_link()
+    protected static function makeLink(?string $action): string
     {
-        return self::make_link('confirm');
-    }
-
-    public static function cancel_link()
-    {
-        return self::make_link('cancel');
-    }
-
-    public static function complete_link()
-    {
-
-        return self::make_link('complete');
-    }
-
-    protected static function make_link($action)
-    {
-        Controller::join_links(
-            Director::baseURL(),
-            Config::inst()->get(PayPalExpressCheckoutPaymentHandler::class, 'url_segment'),
+        return Controller::join_links(
+            Director::absoluteBaseURL(),
+            (string)Config::inst()->get(self::class, 'url_segment'),
             $action
         );
+    }
+
+    protected function getPayment(?HTTPRequest $request): ?PayPalExpressCheckoutPayment
+    {
+        if ($this->payment) {
+            return $this->payment;
+        }
+
+        if (!$request) {
+            return null;
+        }
+
+        $token = (string)$request->getVar('token');
+        if ($token === '') {
+            return null;
+        }
+
+        $payment = PayPalExpressCheckoutPayment::get()
+            ->filter([
+                'Token' => $token,
+                'Status' => 'Incomplete',
+            ])
+            ->first();
+
+        if (!$payment) {
+            user_error('No payment found for token: ' . $token, E_USER_WARNING);
+            return null;
+        }
+
+        $this->payment = $payment;
+        $this->payment->init();
+
+        return $this->payment;
+    }
+
+    protected function getLogger(): LoggerInterface
+    {
+        return Injector::inst()->get(LoggerInterface::class);
+    }
+
+    protected function logRequest(HTTPRequest $request): void
+    {
+        if (Config::inst()->get(PayPalExpressCheckoutPayment::class, 'debug')) {
+            $logger = $this->getLogger();
+            $logger->debug('PayPal handler request', [
+                'action' => $request->param('Action'),
+                'get' => $request->getVars(),
+                'post' => $request->postVars(),
+            ]);
+        }
     }
 }
