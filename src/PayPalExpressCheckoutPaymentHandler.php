@@ -84,7 +84,7 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
         $this->doRedirect();
     }
 
-    protected function doRedirect(): void
+    protected function doRedirect()
     {
         $payment = $this->getPayment($this->getRequest());
 
