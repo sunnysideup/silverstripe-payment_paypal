@@ -3,10 +3,8 @@
 namespace Sunnysideup\PaymentPaypal;
 
 use GuzzleHttp\Client;
-use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\LiteralField;
@@ -303,7 +301,6 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
      */
     public function confirmPayment()
     {
-        $logger = Injector::inst()->get(LoggerInterface::class);
         $amount = $this->Amount->Amount;
         $currency = $this->Amount->Currency;
 
@@ -320,9 +317,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
             'IPADDRESS' => urlencode($_SERVER['SERVER_NAME']),
         ];
 
-        $logger->warning(print_r(json_encode($data), true));
         $response = $this->apiCall('DoExpressCheckoutPayment', $data);
-        $logger->warning(print_r(json_encode($response), true));
 
         if (
             !isset($response['ACK']) ||
