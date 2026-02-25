@@ -100,7 +100,16 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         $fields = parent::getCMSFields();
 
         foreach (array_keys($this->config()->get('db')) as $field) {
+            /** @TODO SSU RECTOR UPGRADE TASK - FieldList::removeFieldFromTab: Changed type of parameter $fieldName in FieldList::removeFieldFromTab() from dynamic to string
+             * @TODO SSU RECTOR UPGRADE TASK - FieldList::removeFieldFromTab: Changed type of parameter $tabName in FieldList::removeFieldFromTab() from dynamic to string
+             * @TODO SSU RECTOR UPGRADE TASK - FieldList::removeFieldFromTab: Changed return type for method FieldList::removeFieldFromTab() from dynamic to FieldList
+             */
             $fields->removeFieldFromTab('Root.Main', $field);
+            /** @TODO SSU RECTOR UPGRADE TASK - FieldList::addFieldToTab: Changed type of parameter $field in FieldList::addFieldToTab() from dynamic to FormField
+             * @TODO SSU RECTOR UPGRADE TASK - FieldList::addFieldToTab: Changed type of parameter $insertBefore in FieldList::addFieldToTab() from dynamic to string|null
+             * @TODO SSU RECTOR UPGRADE TASK - FieldList::addFieldToTab: Changed type of parameter $tabName in FieldList::addFieldToTab() from dynamic to string
+             * @TODO SSU RECTOR UPGRADE TASK - FieldList::addFieldToTab: Changed return type for method FieldList::addFieldToTab() from dynamic to FieldList
+             */
             $fields->addFieldToTab(
                 'Root.Advanced',
                 LiteralField::create(
