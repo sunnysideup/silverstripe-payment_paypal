@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Sunnysideup\PaymentPaypal;
 
+use Override;
 use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
@@ -25,6 +26,7 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
 
     protected ?PayPalExpressCheckoutPayment $payment = null;
 
+    #[Override]
     public function Link($action = null): string
     {
         return self::makeLink($action);
@@ -54,7 +56,7 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
         $this->logRequest($request);
 
         $payment = $this->getPayment($request);
-        if (!$payment) {
+        if (!$payment instanceof PayPalExpressCheckoutPayment) {
             user_error('No payment found for token: ' . (string)$request->getVar('token'), E_USER_WARNING);
             $this->doRedirect();
             return;
@@ -75,7 +77,7 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
         $this->logRequest($request);
 
         $payment = $this->getPayment($request);
-        if ($payment) {
+        if ($payment instanceof PayPalExpressCheckoutPayment) {
             $payment->Status = 'Failure';
             $payment->Message = _t('PayPalExpressCheckoutPayment.USERCANCELLED', 'User cancelled');
             $payment->write();
@@ -108,11 +110,11 @@ class PayPalExpressCheckoutPaymentHandler extends Controller
 
     protected function getPayment(?HTTPRequest $request): ?PayPalExpressCheckoutPayment
     {
-        if ($this->payment) {
+        if ($this->payment instanceof PayPalExpressCheckoutPayment) {
             return $this->payment;
         }
 
-        if (!$request) {
+        if (!$request instanceof HTTPRequest) {
             return null;
         }
 
