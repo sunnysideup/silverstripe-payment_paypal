@@ -2,6 +2,7 @@
 
 namespace Sunnysideup\PaymentPaypal;
 
+use Override;
 use GuzzleHttp\Client;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Config;
@@ -32,10 +33,15 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 {
     // Configuration
     private static $debug = true;
+
     private static $continue_button_text = 'Continue to PayPal';
+
     private static $table_name = 'PayPalExpressCheckoutPayment';
+
     private static $logo = 'sunnysideup/payment_paypal: client/dist/images/paypal.png';
+
     private static $payment_methods = [];
+
     private static $version = '64';
 
     // Database fields
@@ -49,18 +55,25 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
 
     // PayPal URLs - Test Environment
     private static $test_API_Endpoint = 'https://api-3t.sandbox.paypal.com/nvp';
+
     private static $test_PAYPAL_URL = 'https://www.sandbox.paypal.com/webscr?cmd=_express-checkout&token=';
 
     // PayPal URLs - Live Environment
     private static $API_Endpoint = 'https://api-3t.paypal.com/nvp';
+
     private static $PAYPAL_URL = 'https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=';
+
     private static $privacy_link = 'https://www.paypal.com/us/cgi-bin/webscr?cmd=p/gen/ua/policy_privacy-outside';
 
     // API Credentials
     private static $test_mode = false;
+
     private static $API_UserName;
+
     private static $API_Password;
+
     private static $API_Signature;
+
     private static $sBNCode; // BN Code is only applicable for partners
 
     // Custom PayPal checkout settings
@@ -81,6 +94,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     /**
      * Configure CMS fields for this payment method
      */
+    #[Override]
     public function getCMSFields()
     {
         $fields = parent::getCMSFields();
@@ -102,6 +116,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     /**
      * Get payment form fields for checkout
      */
+    #[Override]
     public function getPaymentFormFields($amount = 0, ?Order $order = null): FieldList
     {
         $logo = $this->config()->get('logo');
@@ -109,18 +124,13 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         $logoHtml = '<img src="' . $src . '" alt="Credit card payments powered by PayPal"/>';
         $privacyLink = '<a href="' . $this->Config()->get('privacy_link') . '" target="_blank" title="Read PayPal\'s privacy policy">' . $logoHtml . '</a><br/>';
 
-        return new FieldList(
-            new LiteralField('PayPalInfo', $privacyLink),
-            new LiteralField(
-                'PayPalPaymentsList',
-                $this->RenderWith('Sunnysideup/PaymentPaypal/Includes/PaymentMethods')
-            )
-        );
+        return FieldList::create(LiteralField::create('PayPalInfo', $privacyLink), LiteralField::create('PayPalPaymentsList', $this->RenderWith('Sunnysideup/PaymentPaypal/Includes/PaymentMethods')));
     }
 
     /**
      * Get payment form requirements
      */
+    #[Override]
     public function getPaymentFormRequirements(): array
     {
         return [];
@@ -129,6 +139,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     /**
      * Main payment processing function
      */
+    #[Override]
     public function processPayment($data, $form)
     {
         // Validate API credentials
@@ -178,10 +189,11 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
     /**
      * Set default values on object creation
      */
+    #[Override]
     public function populateDefaults()
     {
         parent::populateDefaults();
-        $this->AuthorisationCode = md5(uniqid(rand(), true));
+        $this->AuthorisationCode = md5(uniqid(random_int(0, mt_getrandmax()), true));
     }
 
     /**
@@ -221,12 +233,15 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
             if (isset($extradata['FirstName'])) {
                 $nameComponents[] = $extradata['FirstName'];
             }
+
             if (isset($extradata['MiddleName'])) {
                 $nameComponents[] = $extradata['MiddleName'];
             }
+
             if (isset($extradata['Surname'])) {
                 $nameComponents[] = $extradata['Surname'];
             }
+
             $extradata['Name'] = implode(' ', $nameComponents);
         }
 
@@ -266,12 +281,13 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
             $this->addDebugInfo('RESPONSE: ' . print_r($response, 1));
 
             $debugMessage = 'PayPal Debug:' .
-                "\nMode: $mode" .
+                ('
+Mode: ' . $mode) .
                 "\nAPI url: " . $this->getApiEndpoint() .
                 "\nRedirect url: " . $this->getPayPalURL($response['TOKEN']) .
                 "\nUsername: " . $this->Config()->get('API_UserName') .
-                "\nPassword: ***" . strlen($this->Config()->get('API_Password')) . ' characters' .
-                "\nSignature: ***" . strlen($this->Config()->get('API_Signature')) . ' characters' .
+                "\nPassword: ***" . strlen((string) $this->Config()->get('API_Password')) . ' characters' .
+                "\nSignature: ***" . strlen((string) $this->Config()->get('API_Signature')) . ' characters' .
                 "\nRequest Data: " . print_r($data, true) .
                 "\nResponse: " . print_r($response, true);
 
@@ -314,7 +330,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
             'PAYMENTREQUEST_0_PAYMENTACTION' => 'Sale',
             'PAYMENTREQUEST_0_AMT' => $amount,
             'PAYMENTREQUEST_0_CURRENCYCODE' => $currency,
-            'IPADDRESS' => urlencode($_SERVER['SERVER_NAME']),
+            'IPADDRESS' => urlencode((string) $_SERVER['SERVER_NAME']),
         ];
 
         $response = $this->apiCall('DoExpressCheckoutPayment', $data);
@@ -389,6 +405,7 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
                 if (isset($response['PAYMENTINFO_0_PENDINGREASON'])) {
                     $this->Message .= ' ' . $this->getPendingReason($response['PAYMENTINFO_0_PENDINGREASON']);
                 }
+
                 break;
 
             case 'REFUNDED':
@@ -402,25 +419,14 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
      */
     protected function getPendingReason($reason)
     {
-        switch ($reason) {
-            case 'address':
-                return _t('PayPalExpressCheckoutPayment.PENDING.ADDRESS', 'A confirmed shipping address was not provided.');
-            case 'authorization':
-                return _t('PayPalExpressCheckoutPayment.PENDING.AUTHORISATION', 'Payment has been authorised, but not settled.');
-            case 'echeck':
-                return _t('PayPalExpressCheckoutPayment.PENDING.ECHECK', 'eCheck has not cleared.');
-            case 'intl':
-                return _t('PayPalExpressCheckoutPayment.PENDING.INTERNATIONAL', 'International: payment must be accepted or denied manually.');
-            case 'multicurrency':
-                return _t('PayPalExpressCheckoutPayment.PENDING.MULTICURRENCY', 'Multi-currency: payment must be accepted or denied manually.');
-            case 'order':
-            case 'paymentreview':
-            case 'unilateral':
-            case 'verify':
-            case 'other':
-            default:
-                return '';
-        }
+        return match ($reason) {
+            'address' => _t('PayPalExpressCheckoutPayment.PENDING.ADDRESS', 'A confirmed shipping address was not provided.'),
+            'authorization' => _t('PayPalExpressCheckoutPayment.PENDING.AUTHORISATION', 'Payment has been authorised, but not settled.'),
+            'echeck' => _t('PayPalExpressCheckoutPayment.PENDING.ECHECK', 'eCheck has not cleared.'),
+            'intl' => _t('PayPalExpressCheckoutPayment.PENDING.INTERNATIONAL', 'International: payment must be accepted or denied manually.'),
+            'multicurrency' => _t('PayPalExpressCheckoutPayment.PENDING.MULTICURRENCY', 'Multi-currency: payment must be accepted or denied manually.'),
+            default => '',
+        };
     }
 
     /**
@@ -485,19 +491,19 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         $initial = 0;
         $nvpArray = [];
 
-        while (strlen($nvpString)) {
+        while (strlen((string) $nvpString)) {
             // Position of key
-            $keyPos = strpos($nvpString, '=');
+            $keyPos = strpos((string) $nvpString, '=');
             // Position of value
-            $valuePos = strpos($nvpString, '&') ? strpos($nvpString, '&') : strlen($nvpString);
+            $valuePos = strpos((string) $nvpString, '&') ?: strlen((string) $nvpString);
 
             // Extract key and value
-            $key = substr($nvpString, $initial, $keyPos);
-            $value = substr($nvpString, $keyPos + 1, $valuePos - $keyPos - 1);
+            $key = substr((string) $nvpString, $initial, $keyPos);
+            $value = substr((string) $nvpString, $keyPos + 1, $valuePos - $keyPos - 1);
 
             // Store in array with URL decoding
             $nvpArray[urldecode($key)] = urldecode($value);
-            $nvpString = substr($nvpString, $valuePos + 1, strlen($nvpString));
+            $nvpString = substr((string) $nvpString, $valuePos + 1, strlen((string) $nvpString));
         }
 
         return $nvpArray;
@@ -534,10 +540,8 @@ class PayPalExpressCheckoutPayment extends EcommercePayment
         if (Config::inst()->get(PayPalExpressCheckoutPayment::class, 'debug')) {
             $this->Debug .= "---------//------------\n\n" . $msg;
             $this->write();
-        } else {
-            if (rand(0, 10) == 0) {
-                DB::query('UPDATE "PayPalExpressCheckoutPayment" SET "Debug" = null WHERE "Debug" IS NOT NULL');
-            }
+        } elseif (random_int(0, 10) === 0) {
+            DB::query('UPDATE "PayPalExpressCheckoutPayment" SET "Debug" = null WHERE "Debug" IS NOT NULL');
         }
     }
 }
